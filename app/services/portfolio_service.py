@@ -74,14 +74,18 @@ class PortfolioService:
         net_return_percentage = (
             (net_return / total_invested * 100) if total_invested > 0 else 0
         )
+        market_gain_percentage = (total_market_gain / total_invested * 100) if total_invested > 0 else 0
+        today_gain_percentage = (today_gain / previous_market_value * 100) if previous_market_value > 0 else 0
         
         return {
             'total_invested': round(total_invested, 2),
             'current_market_value': round(current_market_value, 2),
             'today_gain': round(today_gain, 2),
+            'today_gain_percentage': round(today_gain_percentage, 2), # <--- Nuevo
+            'total_market_gain': round(total_market_gain, 2),         # <--- Nuevo
+            'market_gain_percentage': round(market_gain_percentage, 2), # <--- Nuevo
             'net_return': round(net_return, 2),
-            'net_return_percentage': round(net_return_percentage, 2),
-            'total_market_gain': round(total_market_gain, 2) # <--- Añade esto
+            'net_return_percentage': round(net_return_percentage, 2)
         }
     
     @staticmethod
