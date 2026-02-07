@@ -1,0 +1,265 @@
+{% extends "base.html" %} {% block title %}Registrar Movimiento - {{
+instrument.symbol }}{% endblock %} {% block content %}
+<div class="container">
+  <!-- Back Button -->
+  <div class="mb-3">
+    <a href="{{ url_for('main.index') }}" class="btn btn-outline-secondary">
+      <i class="bi bi-arrow-left"></i> Volver al Dashboard
+    </a>
+  </div>
+
+  <h1 class="mb-4">
+    <i class="bi bi-pencil-square"></i> Registrar Movimiento - {{
+    instrument.symbol }}
+  </h1>
+
+  <div class="row">
+    <!-- Transaction Form -->
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header bg-primary text-white">
+          <h5 class="mb-0">Nueva Transacción</h5>
+        </div>
+        <div class="card-body">
+          <form
+            method="POST"
+            action="{{ url_for('main.register_transaction', instrument_id=instrument.id) }}"
+          >
+            <div class="mb-3">
+              <label for="transaction_type" class="form-label"
+                >Tipo de Movimiento *</label
+              >
+              <select
+                class="form-select"
+                id="transaction_type"
+                name="transaction_type"
+                required
+              >
+                <option value="">Seleccione...</option>
+                <option value="buy">Compra</option>
+                <option value="sell">Venta</option>
+              </select>
+            </div>
+
+            <div class="mb-3">
+              <label for="quantity" class="form-label"
+                >Cantidad de Títulos *</label
+              >
+              <input
+                type="number"
+                class="form-control"
+                id="quantity"
+                name="quantity"
+                step="0.000000000001"
+                min="0.000000000001"
+                required
+              />
+              <div class="form-text">
+                Máximo 12 decimales. {% if instrument.quantity > 0 %}
+                Disponible: {{ instrument.quantity|number(12) }} {% endif %}
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="price" class="form-label"
+                >Precio de Compra/Venta *</label
+              >
+              <div class="input-group">
+                <span class="input-group-text">$</span>
+                <input
+                  type="number"
+                  class="form-control"
+                  id="price"
+                  name="price"
+                  step="0.00000001"
+                  min="0.00000001"
+                  required
+                />
+              </div>
+              <div class="form-text">Máximo 8 decimales</div>
+            </div>
+
+            <div class="mb-3">
+              <label for="commission" class="form-label">Comisión *</label>
+              <div class="input-group">
+                <span class="input-group-text">$</span>
+                <input
+                  type="number"
+                  class="form-control"
+                  id="commission"
+                  name="commission"
+                  step="0.01"
+                  min="0"
+                  value="0"
+                  required
+                />
+              </div>
+              <div class="form-text">Comisión del broker</div>
+            </div>
+
+            <div class="mb-3">
+              <label for="transaction_date" class="form-label">Fecha *</label>
+              <input
+                type="date"
+                class="form-control"
+                id="transaction_date"
+                name="transaction_date"
+                required
+                max="{{ today }}"
+              />
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Total a Pagar</label>
+              <div class="alert alert-info" id="totalDisplay">
+                <strong>$0.00</strong>
+              </div>
+              <div class="form-text">
+                Compra: (Cantidad × Precio) + Comisión<br />
+                Venta: (Cantidad × Precio) - Comisión
+              </div>
+            </div>
+
+            <div class="d-grid gap-2">
+              <button type="submit" class="btn btn-primary">
+                <i class="bi bi-check-circle"></i> Registrar Transacción
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Current Position Summary -->
+      <div class="card mt-4">
+        <div class="card-header bg-light">
+          <h6 class="mb-0">Posición Actual</h6>
+        </div>
+        <div class="card-body">
+          <table class="table table-sm mb-0">
+            <tr>
+              <td><strong>Cantidad:</strong></td>
+              <td class="text-end">{{ instrument.quantity|number(12) }}</td>
+            </tr>
+            <tr>
+              <td><strong>Precio Promedio:</strong></td>
+              <td class="text-end">
+                {{ instrument.average_purchase_price|currency }}
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Costo Total:</strong></td>
+              <td class="text-end">{{ instrument.total_cost|currency }}</td>
+            </tr>
+            <tr>
+              <td><strong>Comisiones Totales:</strong></td>
+              <td class="text-end">
+                {{ instrument.total_commission|currency }}
+              </td>
+            </tr>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Transaction History -->
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header bg-secondary text-white">
+          <h5 class="mb-0">Historial de Transacciones</h5>
+        </div>
+        <div class="card-body p-0">
+          {% if transactions %}
+          <div class="table-responsive">
+            <table class="table table-hover table-sm mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Fecha</th>
+                  <th>Tipo</th>
+                  <th class="text-end">Cantidad</th>
+                  <th class="text-end">Precio</th>
+                  <th class="text-end">Comisión</th>
+                  <th class="text-end">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for trans in transactions %}
+                <tr>
+                  <td>{{ trans.transaction_date.strftime('%Y-%m-%d') }}</td>
+                  <td>
+                    <span
+                      class="badge {% if trans.transaction_type == 'buy' %}bg-success{% else %}bg-danger{% endif %}"
+                    >
+                      {{ trans.transaction_type|upper }}
+                    </span>
+                  </td>
+                  <td class="text-end">{{ trans.quantity|number(12) }}</td>
+                  <td class="text-end">{{ trans.price|currency }}</td>
+                  <td class="text-end">{{ trans.commission|currency }}</td>
+                  <td class="text-end">
+                    <strong>{{ trans.total_paid|currency }}</strong>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+          <div class="text-center py-5 text-muted">
+            <i class="bi bi-inbox fs-1 d-block mb-3"></i>
+            No hay transacciones registradas
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} {% block extra_js %}
+<script>
+  // Set today's date as max and default
+  document.addEventListener('DOMContentLoaded', function() {
+      const today = new Date().toISOString().split('T')[0];
+      const dateInput = document.getElementById('transaction_date');
+      dateInput.max = today;
+      dateInput.value = today;
+  });
+
+  // Calculate total automatically
+  function calculateTotal() {
+      const transactionType = document.getElementById('transaction_type').value;
+      const quantity = parseFloat(document.getElementById('quantity').value) || 0;
+      const price = parseFloat(document.getElementById('price').value) || 0;
+      const commission = parseFloat(document.getElementById('commission').value) || 0;
+
+      let total = 0;
+
+      if (transactionType === 'buy') {
+          total = (quantity * price) + commission;
+      } else if (transactionType === 'sell') {
+          total = (quantity * price) - commission;
+      }
+
+      const totalDisplay = document.getElementById('totalDisplay');
+      totalDisplay.innerHTML = `<strong>$${total.toFixed(2)}</strong>`;
+
+      // Change color based on transaction type
+      totalDisplay.className = transactionType === 'buy' ? 'alert alert-warning' : 'alert alert-success';
+  }
+
+  // Add event listeners
+  document.getElementById('transaction_type').addEventListener('change', calculateTotal);
+  document.getElementById('quantity').addEventListener('input', calculateTotal);
+  document.getElementById('price').addEventListener('input', calculateTotal);
+  document.getElementById('commission').addEventListener('input', calculateTotal);
+
+  // Validate sell quantity
+  document.getElementById('transaction_type').addEventListener('change', function() {
+      const quantityInput = document.getElementById('quantity');
+      if (this.value === 'sell') {
+          quantityInput.max = {{ instrument.quantity }};
+      } else {
+          quantityInput.removeAttribute('max');
+      }
+  });
+</script>
+{% endblock %}
