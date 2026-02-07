@@ -154,6 +154,35 @@ endblock %} {% block content %}
             </tr>
             {% endif %}
           </tbody>
+          <tfoot class="table-light fw-bold">
+            <tr>
+              <td colspan="5" class="text-end">TOTALES:</td>
+              <td class="text-end">{{ portfolio.total_invested|currency }}</td>
+              <td class="text-end">
+                {{ portfolio.current_market_value|currency }}
+              </td>
+              <td
+                class="text-end {% if portfolio.total_market_gain >= 0 %}text-success{% else %}text-danger{% endif %}"
+              >
+                {{ portfolio.total_market_gain|currency }}
+              </td>
+              <td
+                class="text-end {% if portfolio.today_gain >= 0 %}text-success{% else %}text-danger{% endif %}"
+              >
+                {{ portfolio.today_gain|currency }}
+              </td>
+              <td
+                class="text-end {% if portfolio.net_return >= 0 %}text-success{% else %}text-danger{% endif %}"
+              >
+                {{ portfolio.net_return|currency }}
+                <br />
+                <small
+                  >({{ portfolio.net_return_percentage|percentage }})</small
+                >
+              </td>
+              <td></td>
+            </tr>
+          </tfoot>
         </table>
       </div>
     </div>

@@ -50,17 +50,19 @@ class PortfolioService:
         total_invested = 0.0
         current_market_value = 0.0
         previous_market_value = 0.0
+        total_market_gain = 0.0
         
         for inst in instruments:
-            # Total invested (including commissions)
             total_invested += float(inst.total_cost)
             
-            # Current market value
             current_price = current_prices.get(inst.symbol)
             if current_price:
                 current_value = float(inst.quantity) * current_price
                 current_market_value += current_value
                 
+                # Calcula y suma la ganancia de mercado individual
+                avg_price = float(inst.average_purchase_price)
+                total_market_gain += (current_price - avg_price) * float(inst.quantity)
                 # Previous market value for today's gain
                 prev_price = previous_prices.get(inst.symbol)
                 if prev_price:
@@ -78,7 +80,8 @@ class PortfolioService:
             'current_market_value': round(current_market_value, 2),
             'today_gain': round(today_gain, 2),
             'net_return': round(net_return, 2),
-            'net_return_percentage': round(net_return_percentage, 2)
+            'net_return_percentage': round(net_return_percentage, 2),
+            'total_market_gain': round(total_market_gain, 2) # <--- Añade esto
         }
     
     @staticmethod
