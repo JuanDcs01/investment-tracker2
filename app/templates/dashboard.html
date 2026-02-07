@@ -8,7 +8,7 @@ endblock %} {% block content %}
   <!-- Portfolio Summary Cards -->
   <div class="row g-3 mb-4">
     <div class="col-md-3">
-      <div class="card text-white bg-primary">
+      <div class="card">
         <div class="card-body">
           <h6 class="card-subtitle mb-2 opacity-75">Total Invertido</h6>
           <h3 class="card-title mb-0">
@@ -18,7 +18,7 @@ endblock %} {% block content %}
       </div>
     </div>
     <div class="col-md-3">
-      <div class="card text-white bg-success">
+      <div class="card">
         <div class="card-body">
           <h6 class="card-subtitle mb-2 opacity-75">Valor Actual de Mercado</h6>
           <h3 class="card-title mb-0">
@@ -28,12 +28,12 @@ endblock %} {% block content %}
       </div>
     </div>
     <div class="col-md-3">
-      <div
-        class="card text-white {% if portfolio.today_gain >= 0 %}bg-info{% else %}bg-warning{% endif %}"
-      >
+      <div class="card">
         <div class="card-body">
           <h6 class="card-subtitle mb-2 opacity-75">Ganancia Hoy</h6>
-          <h3 class="card-title mb-0">
+          <h3
+            class="card-title mb-0 {% if portfolio.today_gain >= 0 %}text-success{% else %}text-danger{% endif %}"
+          >
             {{ portfolio.today_gain|currency }} {% if portfolio.today_gain >= 0
             %}
             <i class="bi bi-arrow-up"></i>
@@ -45,37 +45,34 @@ endblock %} {% block content %}
       </div>
     </div>
     <div class="col-md-3">
-      <div
-        class="card text-white {% if portfolio.net_return >= 0 %}bg-success{% else %}bg-danger{% endif %}"
-      >
+      <div class="card">
         <div class="card-body">
-          <h6 class="card-subtitle mb-2 opacity-75">Retorno Neto (Real)</h6>
-          <h3 class="card-title mb-0">
+          <h6 class="card-subtitle mb-2 text-muted">Retorno Neto (Real)</h6>
+          <h3
+            class="card-title mb-0 {% if portfolio.net_return >= 0 %}text-success{% else %}text-danger{% endif %}"
+          >
             {{ portfolio.net_return|currency }}
-            <small class="fs-6"
-              >({{ portfolio.net_return_percentage|percentage }})</small
-            >
+            <small class="fs-6">
+              ({{ portfolio.net_return_percentage|percentage }})
+            </small>
           </h3>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Add Instrument Button -->
-  <div class="mb-4">
-    <button
-      class="btn btn-primary"
-      data-bs-toggle="modal"
-      data-bs-target="#addInstrumentModal"
-    >
-      <i class="bi bi-plus-circle"></i> Agregar Instrumento
-    </button>
-  </div>
-
   <!-- Instruments Table -->
   <div class="card mb-4">
-    <div class="card-header bg-primary text-white">
+    <div class="card-header d-flex justify-content-between align-items-center">
       <h5 class="mb-0"><i class="bi bi-wallet2"></i> Mis Instrumentos</h5>
+
+      <button
+        class="btn btn-primary"
+        data-bs-toggle="modal"
+        data-bs-target="#addInstrumentModal"
+      >
+        <i class="bi bi-plus-circle"></i> Agregar Instrumento
+      </button>
     </div>
     <div class="card-body p-0">
       <div class="table-responsive">
@@ -270,77 +267,82 @@ endblock %} {% block content %}
 
 {% endblock %} {% block extra_js %}
 <script>
-  // Add Instrument Form Handler
-  document.getElementById('addInstrumentForm').addEventListener('submit', async function(e) {
-      e.preventDefault();
+      // Add Instrument Form Handler
+      document.getElementById('addInstrumentForm').addEventListener('submit', async function(e) {
+          e.preventDefault();
 
-      const formData = new FormData(this);
-      const submitBtn = this.querySelector('button[type="submit"]');
-      submitBtn.disabled = true;
+          const formData = new FormData(this);
+          const submitBtn = this.querySelector('button[type="submit"]');
+          submitBtn.disabled = true;
 
-      try {
-          const response = await fetch('{{ url_for("main.add_instrument") }}', {
-              method: 'POST',
-              body: formData
-          });
+          try {
+              const response = await fetch('{{ url_for("main.add_instrument") }}', {
+                  method: 'POST',
+                  body: formData
+              });
 
-          const data = await response.json();
+              const data = await response.json();
 
-          if (data.success) {
-              alert(data.message);
-              location.reload();
-          } else {
-              alert(data.message);
+              if (data.success) {
+                  alert(data.message);
+                  location.reload();
+              } else {
+                  alert(data.message);
+              }
+          } catch (error) {
+              alert('Error al agregar el instrumento');
+          } finally {
+              submitBtn.disabled = false;
           }
-      } catch (error) {
-          alert('Error al agregar el instrumento');
-      } finally {
-          submitBtn.disabled = false;
-      }
-  });
+      });
 
-  // Delete Instrument Function
-  async function deleteInstrument(instrumentId, symbol) {
-      if (!confirm(`¿Está seguro de eliminar ${symbol}? Esta acción no se puede deshacer.`)) {
-          return;
-      }
-
-      try {
-          const response = await fetch(`/delete-instrument/${instrumentId}`, {
-              method: 'POST'
-          });
-
-          const data = await response.json();
-
-          if (data.success) {
-              alert(data.message);
-              location.reload();
-          } else {
-              alert(data.message);
+      // Delete Instrument Function
+      async function deleteInstrument(instrumentId, symbol) {
+          if (!confirm(`¿Está seguro de eliminar ${symbol}? Esta acción no se puede deshacer.`)) {
+              return;
           }
-      } catch (error) {
-          alert('Error al eliminar el instrumento');
+
+          try {
+              const response = await fetch(`/delete-instrument/${instrumentId}`, {
+                  method: 'POST'
+              });
+
+              const data = await response.json();
+
+              if (data.success) {
+                  alert(data.message);
+                  location.reload();
+              } else {
+                  alert(data.message);
+              }
+          } catch (error) {
+              alert('Error al eliminar el instrumento');
+          }
       }
-  }
 
-  // Charts
-  {% if instruments %}
-  const distribution = {{ distribution|tojson }};
+      // Charts
+      {% if instruments %}
+      const distribution = {{ distribution|tojson }};
 
-  // Helper function to create doughnut chart
+      // Helper function to create doughnut chart
   function createDoughnutChart(canvasId, data, title) {
       const ctx = document.getElementById(canvasId).getContext('2d');
+      const total = data.reduce((acc, d) => acc + d.value, 0);
 
       new Chart(ctx, {
           type: 'doughnut',
+          plugins: [ChartDataLabels], // Mantenemos el plugin para ver etiquetas dentro
           data: {
               labels: data.map(d => d.label),
               datasets: [{
-                  data: data.map(d => d.percentage),
+                  data: data.map(d => d.value),
+                  // Nueva paleta de colores claros/pasteles
                   backgroundColor: [
-                      '#0d6efd', '#198754', '#ffc107', '#dc3545',
-                      '#6f42c1', '#fd7e14', '#20c997', '#6c757d'
-                  ]
+                      '#A2D2FF', '#B9FBC0', '#FEFAE0', '#FFCFD2',
+                      '#E1DBFF', '#FDE4CF', '#CFFAF1', '#F1F1F1'
+                  ],
+                  borderWidth: 1,
+                  borderColor: '#ffffff'
               }]
           },
           options: {
@@ -354,10 +356,30 @@ endblock %} {% block content %}
                       callbacks: {
                           label: function(context) {
                               const label = context.label || '';
-                              const value = data[context.dataIndex].value;
-                              const percentage = context.parsed;
-                              return `${label}: $${value.toFixed(2)} (${percentage.toFixed(2)}%)`;
+                              const value = context.parsed;
+                              const percentage = ((value / total) * 100).toFixed(2);
+                              return `${label}: $${value.toLocaleString()} (${percentage}%)`;
                           }
+                      }
+                  },
+                  datalabels: {
+                      color: '#000000',      // Texto negro puro
+                      anchor: 'center',      // Centrado en el segmento
+                      align: 'center',
+                      font: {
+                          weight: 'bold',    // En negrita
+                          size: 11
+                      },
+                      // Sin bordes ni sombras
+                      formatter: (value, ctx) => {
+                          let percentage = ((value / total) * 100).toFixed(1) + "%";
+                          let formattedValue = "$" + Math.round(value).toLocaleString();
+                          return formattedValue + "\n" + percentage;
+                      },
+                      textAlign: 'center',
+                      display: function(context) {
+                          // Solo muestra si el trozo es lo bastante grande (evita amontonar)
+                          return (context.dataset.data[context.dataIndex] / total) > 0.05;
                       }
                   }
               }
@@ -365,18 +387,18 @@ endblock %} {% block content %}
       });
   }
 
-  // Create charts
-  if (distribution.by_type && distribution.by_type.length > 0) {
-      createDoughnutChart('typeChart', distribution.by_type, 'Por Tipo');
-  }
+      // Create charts
+      if (distribution.by_type && distribution.by_type.length > 0) {
+          createDoughnutChart('typeChart', distribution.by_type, 'Por Tipo');
+      }
 
-  if (distribution.by_risk && distribution.by_risk.length > 0) {
-      createDoughnutChart('riskChart', distribution.by_risk, 'Por Riesgo');
-  }
+      if (distribution.by_risk && distribution.by_risk.length > 0) {
+          createDoughnutChart('riskChart', distribution.by_risk, 'Por Riesgo');
+      }
 
-  if (distribution.by_instrument && distribution.by_instrument.length > 0) {
-      createDoughnutChart('instrumentChart', distribution.by_instrument, 'Por Instrumento');
-  }
-  {% endif %}
+      if (distribution.by_instrument && distribution.by_instrument.length > 0) {
+          createDoughnutChart('instrumentChart', distribution.by_instrument, 'Por Instrumento');
+      }
+      {% endif %}
 </script>
 {% endblock %}
