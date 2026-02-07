@@ -106,7 +106,7 @@ endblock %} {% block content %}
                   {{ inst.type|upper }}
                 </span>
               </td>
-              <td class="text-end">{{ inst.quantity|number(12) }}</td>
+              <td class="text-end">{{ inst.quantity|number(4) }}</td>
               <td class="text-end">
                 {{ inst.average_purchase_price|currency }}
               </td>
@@ -221,20 +221,6 @@ endblock %} {% block content %}
       <form id="addInstrumentForm">
         <div class="modal-body">
           <div class="mb-3">
-            <label for="symbol" class="form-label">Símbolo</label>
-            <input
-              type="text"
-              class="form-control"
-              id="symbol"
-              name="symbol"
-              required
-              placeholder="Ej: AAPL, BTC"
-            />
-            <div class="form-text">
-              Para criptomonedas no es necesario incluir -USD
-            </div>
-          </div>
-          <div class="mb-3">
             <label for="instrument_type" class="form-label"
               >Tipo de Instrumento</label
             >
@@ -249,6 +235,20 @@ endblock %} {% block content %}
               <option value="etf">ETF</option>
               <option value="crypto">Criptomoneda</option>
             </select>
+          </div>
+          <div class="mb-3">
+            <label for="symbol" class="form-label">Símbolo</label>
+            <input
+              type="text"
+              class="form-control"
+              id="symbol"
+              name="symbol"
+              required
+              placeholder="Ej: AAPL, BTC"
+            />
+            <div class="form-text">
+              Para criptomonedas no es necesario incluir -USD
+            </div>
           </div>
         </div>
         <div class="modal-footer">
