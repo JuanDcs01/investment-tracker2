@@ -22,14 +22,17 @@ class PortfolioService:
             dict: Portfolio metrics including totals and gains
         """
         if not instruments:
-            return {
-                'total_invested': 0.0,
-                'current_market_value': 0.0,
-                'today_gain': 0.0,
-                'net_return': 0.0,
-                'net_return_percentage': 0.0
-            }
-        
+                return {
+                    'total_invested': 0.0,
+                    'current_market_value': 0.0,
+                    'today_gain': 0.0,
+                    'today_gain_percentage': 0.0,      # Añade esto
+                    'total_market_gain': 0.0,          # Añade esto
+                    'market_gain_percentage': 0.0,      # Añade esto
+                    'net_return': 0.0,
+                    'net_return_percentage': 0.0
+                }
+                
         # Fetch current prices for all instruments
         symbols_data = [
             {'symbol': inst.symbol, 'instrument_type': inst.instrument_type}
@@ -97,7 +100,7 @@ class PortfolioService:
             instrument: Instrument object
             
         Returns:
-            dict: Instrument metrics
+            dict: Instrument metrics with percentages
         """
         current_price = MarketService.get_current_price(
             instrument.symbol,
@@ -112,6 +115,7 @@ class PortfolioService:
         quantity = float(instrument.quantity)
         avg_price = float(instrument.average_purchase_price)
         total_cost = float(instrument.total_cost)
+        total_comission = float(instrument.total_commission)
         
         # Current market value
         current_value = quantity * current_price if current_price else 0.0
@@ -119,11 +123,21 @@ class PortfolioService:
         # Market gain (without considering commissions)
         market_gain = (current_price - avg_price) * quantity if current_price else 0.0
         
+        # Market gain percentage (based on average purchase price)
+        market_gain_percentage = (
+            (market_gain / (total_cost - total_comission) * 100) if current_price and avg_price > 0 else 0.0
+        )
+        
         # Today's gain
         if current_price and previous_price:
             today_gain = (current_price - previous_price) * quantity
+            # Today's gain percentage (based on previous close)
+            today_gain_percentage = (
+                ((current_price - previous_price) / previous_price * 100) if previous_price > 0 else 0.0
+            )
         else:
             today_gain = 0.0
+            today_gain_percentage = 0.0
         
         # Net return (considering commissions)
         net_return = current_value - total_cost
@@ -140,7 +154,9 @@ class PortfolioService:
             'total_cost': total_cost,
             'current_value': round(current_value, 2),
             'market_gain': round(market_gain, 2),
+            'market_gain_percentage': round(market_gain_percentage, 2),  # NUEVO - PORCENTAJE POR INSTRUMENTO
             'today_gain': round(today_gain, 2),
+            'today_gain_percentage': round(today_gain_percentage, 2),  # NUEVO - PORCENTAJE POR INSTRUMENTO
             'net_return': round(net_return, 2),
             'net_return_percentage': round(net_return_percentage, 2),
             'instrument_id': instrument.id

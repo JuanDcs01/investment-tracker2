@@ -147,8 +147,7 @@ def register_transaction(instrument_id):
             'transaction.html',
             instrument=instrument,
             transactions=transactions
-        )
-    
+        )    
     # POST - Register new transaction
     try:
         # Get form data

@@ -101,7 +101,7 @@ endblock %} {% block content %}
                 <th>Símbolo</th>
                 <th>Tipo</th>
                 <th class="text-end">Cantidad</th>
-                <th class="text-end">Precio Compra</th>
+                <th class="text-end">AVG Precio Compra</th>
                 <th class="text-end">Precio Actual</th>
                 <th class="text-end">Costo Total</th>
                 <th class="text-end">Valor Actual</th>
@@ -133,11 +133,19 @@ endblock %} {% block content %}
                   class="text-end {% if inst.market_gain >= 0 %}text-success{% else %}text-danger{% endif %}"
                 >
                   {{ inst.market_gain|currency }}
+                  <br />
+                  <small>
+                  ({{ inst.market_gain_percentage|percentage }})
+                  </small>
                 </td>
                 <td
                   class="text-end {% if inst.today_gain >= 0 %}text-success{% else %}text-danger{% endif %}"
                 >
                   {{ inst.today_gain|currency }}
+                  <br />
+                  <small>
+                  ({{ inst.today_gain_percentage|percentage }})
+                  </small>
                 </td>
                 <td
                   class="text-end {% if inst.net_return >= 0 %}text-success{% else %}text-danger{% endif %}"

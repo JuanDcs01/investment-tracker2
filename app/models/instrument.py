@@ -57,41 +57,71 @@ class Instrument(db.Model):
         }
     
     def update_metrics(self):
-        """Update average purchase price and total cost based on transactions."""
+        """
+        Update average purchase price and total cost based on transactions.
+        """
+        # Obtener todas las transacciones de compra y venta
         buy_transactions = self.transactions.filter_by(transaction_type='buy').all()
+        sell_transactions = self.transactions.filter_by(transaction_type='sell').all()
         
+        # Si no hay transacciones de compra, resetear todo
         if not buy_transactions:
             self.quantity = 0
             self.average_purchase_price = 0
             self.total_cost = 0
             self.total_commission = 0
+            self.updated_at = datetime.utcnow()
             return
         
-        # Calculate total quantity
-        total_quantity = sum(t.quantity for t in buy_transactions)
-        total_quantity -= sum(
-            t.quantity for t in self.transactions.filter_by(transaction_type='sell').all()
-        )
+        # Calcular cantidad total comprada
+        total_bought = sum(float(t.quantity) for t in buy_transactions)
         
-        self.quantity = total_quantity
+        # Calcular cantidad total vendida
+        total_sold = sum(float(t.quantity) for t in sell_transactions)
         
-        # Calculate weighted average purchase price
-        if total_quantity > 0:
-            total_cost_without_commission = sum(
-                t.quantity * t.price for t in buy_transactions
-            )
-            self.average_purchase_price = total_cost_without_commission / sum(
-                t.quantity for t in buy_transactions
-            )
-        else:
+        # Cantidad actual en posesión
+        current_quantity = total_bought - total_sold
+        self.quantity = current_quantity
+        
+        # Si la cantidad actual es 0 o negativa, resetear
+        if current_quantity <= 0:
+            self.quantity = 0
             self.average_purchase_price = 0
+            self.total_cost = 0
+            self.total_commission = sum(
+                float(t.commission) for t in buy_transactions + sell_transactions
+            )
+            self.updated_at = datetime.utcnow()
+            return
         
-        # Calculate total cost including commissions
-        self.total_commission = sum(t.commission for t in self.transactions.all())
-        self.total_cost = sum(
-            t.total_paid for t in buy_transactions
-        ) - sum(
-            t.total_paid for t in self.transactions.filter_by(transaction_type='sell').all()
+        # Calcular precio promedio ponderado de compra
+        # Solo basado en las compras que aún están en posesión
+        total_cost_of_purchases = sum(
+            float(t.quantity) * float(t.price) 
+            for t in buy_transactions
         )
         
+        # El precio promedio es el costo total dividido por la cantidad total comprada
+        self.average_purchase_price = total_cost_of_purchases / total_bought
+        
+        # Calcular costo total (inversión actual)
+        # Esto es: costo de compras - ingresos de ventas
+        total_paid_in_buys = sum(float(t.total_paid) for t in buy_transactions)
+        total_received_in_sells = sum(float(t.total_paid) for t in sell_transactions)
+        
+        # El costo total es lo que pagaste menos lo que recibiste
+        # Ajustado proporcionalmente a la cantidad actual
+        if total_bought > 0:
+            # Costo proporcional a la cantidad que aún posees
+            proportion_held = current_quantity / total_bought
+            self.total_cost = total_paid_in_buys * proportion_held
+        else:
+            self.total_cost = 0
+        
+        # Calcular comisiones totales
+        self.total_commission = sum(
+            float(t.commission) for t in buy_transactions + sell_transactions
+        )
+        
+        # Actualizar timestamp
         self.updated_at = datetime.utcnow()

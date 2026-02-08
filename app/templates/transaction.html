@@ -110,14 +110,20 @@ instrument.symbol }}{% endblock %} {% block content %}
             </div>
 
             <div class="mb-3">
-              <label class="form-label">Total a Pagar</label>
-              <div class="alert alert-info" id="totalDisplay">
-                <strong>$0.00</strong>
+              <label for="totalDisplay" class="form-label">Total a Pagar</label>
+              <div class="input-group">
+                <span class="input-group-text">$</span>
+                <input
+                  type="number"
+                  class="form-control bg-light"
+                  id="totalDisplay"
+                  name="total"
+                  step="0.01"
+                  value="0.00"
+                  readonly
+                />
               </div>
-              <div class="form-text">
-                Compra: (Cantidad × Precio) + Comisión<br />
-                Venta: (Cantidad × Precio) - Comisión
-              </div>
+              <div class="form-text">Cálculo automático final</div>
             </div>
 
             <div class="d-grid gap-2">
@@ -216,50 +222,53 @@ instrument.symbol }}{% endblock %} {% block content %}
 </div>
 {% endblock %} {% block extra_js %}
 <script>
-  // Set today's date as max and default
-  document.addEventListener('DOMContentLoaded', function() {
-      const today = new Date().toISOString().split('T')[0];
+    // Set today's date as max and default
+  // Obtenemos la fecha local (año, mes y día por separado)
+      const ahora = new Date();
+      const anio = ahora.getFullYear();
+      const mes = String(ahora.getMonth() + 1).padStart(2, '0'); // Los meses van de 0 a 11
+      const dia = String(ahora.getDate()).padStart(2, '0');
+
+      // Formateamos como AAAA-MM-DD
+      const today = `${anio}-${mes}-${dia}`;
+
       const dateInput = document.getElementById('transaction_date');
       dateInput.max = today;
       dateInput.value = today;
-  });
 
-  // Calculate total automatically
-  function calculateTotal() {
-      const transactionType = document.getElementById('transaction_type').value;
-      const quantity = parseFloat(document.getElementById('quantity').value) || 0;
-      const price = parseFloat(document.getElementById('price').value) || 0;
-      const commission = parseFloat(document.getElementById('commission').value) || 0;
+    // Calculate total automatically
+    function calculateTotal() {
+        const transactionType = document.getElementById('transaction_type').value;
+        const quantity = parseFloat(document.getElementById('quantity').value) || 0;
+        const price = parseFloat(document.getElementById('price').value) || 0;
+        const commission = parseFloat(document.getElementById('commission').value) || 0;
 
-      let total = 0;
+        let total = 0;
 
-      if (transactionType === 'buy') {
-          total = (quantity * price) + commission;
-      } else if (transactionType === 'sell') {
-          total = (quantity * price) - commission;
-      }
+        if (transactionType === 'buy') {
+            total = (quantity * price) + commission;
+        } else if (transactionType === 'sell') {
+            total = (quantity * price) - commission;
+        }
 
-      const totalDisplay = document.getElementById('totalDisplay');
-      totalDisplay.innerHTML = `<strong>$${total.toFixed(2)}</strong>`;
+        const totalDisplay = document.getElementById('totalDisplay');
+        totalDisplay.value = total.toFixed(2); // Los inputs usan .value
+    }
 
-      // Change color based on transaction type
-      totalDisplay.className = transactionType === 'buy' ? 'alert alert-warning' : 'alert alert-success';
-  }
+    // Add event listeners
+    document.getElementById('transaction_type').addEventListener('change', calculateTotal);
+    document.getElementById('quantity').addEventListener('input', calculateTotal);
+    document.getElementById('price').addEventListener('input', calculateTotal);
+    document.getElementById('commission').addEventListener('input', calculateTotal);
 
-  // Add event listeners
-  document.getElementById('transaction_type').addEventListener('change', calculateTotal);
-  document.getElementById('quantity').addEventListener('input', calculateTotal);
-  document.getElementById('price').addEventListener('input', calculateTotal);
-  document.getElementById('commission').addEventListener('input', calculateTotal);
-
-  // Validate sell quantity
-  document.getElementById('transaction_type').addEventListener('change', function() {
-      const quantityInput = document.getElementById('quantity');
-      if (this.value === 'sell') {
-          quantityInput.max = {{ instrument.quantity }};
-      } else {
-          quantityInput.removeAttribute('max');
-      }
-  });
+    // Validate sell quantity
+    document.getElementById('transaction_type').addEventListener('change', function() {
+        const quantityInput = document.getElementById('quantity');
+        if (this.value === 'sell') {
+            quantityInput.max = {{ instrument.quantity }};
+        } else {
+            quantityInput.removeAttribute('max');
+        }
+    });
 </script>
 {% endblock %}

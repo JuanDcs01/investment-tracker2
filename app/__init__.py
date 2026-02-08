@@ -53,20 +53,23 @@ def register_template_filters(app):
     @app.template_filter('currency')
     def currency_filter(value):
         """Format value as currency."""
-        if value is None:
+        try:
+            return f"${float(value):,.2f}"
+        except (ValueError, TypeError):
             return "$0.00"
-        return f"${value:,.2f}"
     
     @app.template_filter('percentage')
     def percentage_filter(value):
         """Format value as percentage."""
-        if value is None:
+        try:
+            return f"{float(value):,.2f}%"
+        except (ValueError, TypeError):
             return "0.00%"
-        return f"{value:,.2f}%"
     
     @app.template_filter('number')
     def number_filter(value, decimals=2):
         """Format number with specified decimals."""
-        if value is None:
+        try:
+            return f"{float(value):,.{decimals}f}"
+        except (ValueError, TypeError):
             return "0.00"
-        return f"{value:,.{decimals}f}"
