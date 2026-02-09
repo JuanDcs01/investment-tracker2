@@ -1,8 +1,11 @@
 from typing import Dict, List, Optional
 from decimal import Decimal
 from app.models import Instrument
+from app.models import Transaction
 from app.services.market_service import MarketService
+from decimal import Decimal
 import logging
+
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +31,7 @@ class PortfolioService:
                     'today_gain': 0.0,
                     'today_gain_percentage': 0.0,      # Añade esto
                     'total_market_gain': 0.0,          # Añade esto
-                    'market_gain_percentage': 0.0,      # Añade esto
+                    'unrealized_gain_percentage': 0.0,      # Añade esto
                     'net_return': 0.0,
                     'net_return_percentage': 0.0
                 }
@@ -54,9 +57,12 @@ class PortfolioService:
         current_market_value = 0.0
         previous_market_value = 0.0
         total_market_gain = 0.0
+        total_comission = 0.0
+        total_cost_base = 0.0
         
         for inst in instruments:
-            total_invested += float(inst.total_cost)
+            total_comission += float(inst.commission)
+            total_cost_base += float(inst.cost_base) 
             
             current_price = current_prices.get(inst.symbol)
             if current_price:
@@ -70,7 +76,9 @@ class PortfolioService:
                 prev_price = previous_prices.get(inst.symbol)
                 if prev_price:
                     previous_market_value += float(inst.quantity) * prev_price
-        
+
+        total_invested = total_comission + total_cost_base
+
         # Calculate metrics
         today_gain = current_market_value - previous_market_value
         net_return = current_market_value - total_invested
@@ -88,7 +96,9 @@ class PortfolioService:
             'total_market_gain': round(total_market_gain, 2),         # <--- Nuevo
             'market_gain_percentage': round(market_gain_percentage, 2), # <--- Nuevo
             'net_return': round(net_return, 2),
-            'net_return_percentage': round(net_return_percentage, 2)
+            'net_return_percentage': round(net_return_percentage, 2),
+            'total_comission': round(total_comission, 2),
+            'total_cost_base': round(total_cost_base, 2)
         }
     
     @staticmethod
@@ -114,49 +124,82 @@ class PortfolioService:
         
         quantity = float(instrument.quantity)
         avg_price = float(instrument.average_purchase_price)
-        total_cost = float(instrument.total_cost)
-        total_comission = float(instrument.total_commission)
+        cost_base = float(instrument.cost_base)
+        comission = float(instrument.commission)
         
-        # Current market value
+        # Valor actual de mercado
         current_value = quantity * current_price if current_price else 0.0
-        
-        # Market gain (without considering commissions)
-        market_gain = (current_price - avg_price) * quantity if current_price else 0.0
-        
+
+        # Ganancia no realizada
+        unrealized_gain = current_value - cost_base
+
+        # Ganancia realizada
+        realized_gain = Decimal('0.0')
+        sell_transactions = instrument.transactions.filter_by(transaction_type='sell').all()
+        for t in sell_transactions:
+            # Convertir cantidad y precio a Decimal
+            qty_sold = Decimal(str(t.quantity))
+            price_sold = Decimal(str(t.price))
+            comm_sale = Decimal(str(t.commission))
+            
+            # Cantidad comprada total hasta esa venta
+            buy_tx_before = instrument.transactions.filter_by(transaction_type='buy').filter(Transaction.id <= t.id).all()
+            total_bought_before = sum(Decimal(str(tx.quantity)) for tx in buy_tx_before)
+            
+            if total_bought_before == 0:
+                continue  # evitar división por cero
+
+            proportion_sold = qty_sold / total_bought_before
+
+            # Costo proporcional de la venta
+            cost_sold = instrument.cost_base * proportion_sold
+
+            # Comisiones proporcionales de compra + comisión de la venta
+            commission_buy_total = sum(Decimal(str(tx.commission)) for tx in buy_tx_before)
+            commission_proportional = commission_buy_total * proportion_sold
+            commission_total = commission_proportional + comm_sale
+
+            # Ganancia neta realizada de esta venta
+            realized_gain += (price_sold * qty_sold) - cost_sold - commission_total
+
         # Market gain percentage (based on average purchase price)
-        market_gain_percentage = (
-            (market_gain / (total_cost - total_comission) * 100) if current_price and avg_price > 0 else 0.0
+        unrealized_gain_percentage = (
+            (unrealized_gain / cost_base * 100) if current_price and avg_price > 0 else 0.0
         )
         
         # Today's gain
-        if current_price and previous_price:
-            today_gain = (current_price - previous_price) * quantity
-            # Today's gain percentage (based on previous close)
-            today_gain_percentage = (
-                ((current_price - previous_price) / previous_price * 100) if previous_price > 0 else 0.0
-            )
-        else:
-            today_gain = 0.0
-            today_gain_percentage = 0.0
+        # if current_price and previous_price:
+        #     today_gain = (current_price - previous_price) * quantity
+        #     # Today's gain percentage (based on previous close)
+        #     today_gain_percentage = (
+        #         ((current_price - previous_price) / previous_price * 100) if previous_price > 0 else 0.0
+        #     )
+        # else:
+        #     today_gain = 0.0
+        #     today_gain_percentage = 0.0
         
         # Net return (considering commissions)
-        net_return = current_value - total_cost
+        net_return = current_value - cost_base
         net_return_percentage = (
-            (net_return / total_cost * 100) if total_cost > 0 else 0
+            (net_return / cost_base * 100) if cost_base > 0 else 0
         )
         
         return {
             'symbol': instrument.symbol,
             'type': instrument.instrument_type,
             'quantity': quantity,
+            'cost_base': round(cost_base, 2),
+            'comission': comission,
+            'current_value': round(current_value, 2),
+            'unrealized_gain': round(unrealized_gain, 2),
+            'unrealized_gain_percentage': round(unrealized_gain_percentage, 2),
+            'realized_gain': round(realized_gain, 2),
+
             'average_purchase_price': avg_price,
             'current_price': current_price if current_price else 0.0,
-            'total_cost': total_cost,
-            'current_value': round(current_value, 2),
-            'market_gain': round(market_gain, 2),
-            'market_gain_percentage': round(market_gain_percentage, 2),  # NUEVO - PORCENTAJE POR INSTRUMENTO
-            'today_gain': round(today_gain, 2),
-            'today_gain_percentage': round(today_gain_percentage, 2),  # NUEVO - PORCENTAJE POR INSTRUMENTO
+            # 'market_gain': round(market_gain, 2),
+            # 'today_gain': round(today_gain, 2),
+            # 'today_gain_percentage': round(today_gain_percentage, 2),  # NUEVO - PORCENTAJE POR INSTRUMENTO
             'net_return': round(net_return, 2),
             'net_return_percentage': round(net_return_percentage, 2),
             'instrument_id': instrument.id

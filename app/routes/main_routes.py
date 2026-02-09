@@ -40,7 +40,7 @@ def index():
         
     except Exception as e:
         logger.error(f"Error loading dashboard: {str(e)}")
-        flash('Error al cargar el dashboard', 'danger')
+        flash(f'Error al cargar el dashboard {e}', 'danger')
         return render_template(
             'dashboard.html',
             portfolio={},
@@ -87,8 +87,8 @@ def add_instrument():
             instrument_type=instrument_type,
             quantity=0,
             average_purchase_price=0,
-            total_cost=0,
-            total_commission=0
+            cost_base=0,
+            commission=0
         )
         
         db.session.add(instrument)
@@ -225,7 +225,7 @@ def register_transaction(instrument_id):
     except Exception as e:
         logger.error(f"Error registering transaction: {str(e)}")
         db.session.rollback()
-        flash('Error al registrar la transacción', 'danger')
+        flash('Error al registrar la transacción {e}', 'danger')
         return redirect(url_for('main.register_transaction', instrument_id=instrument_id))
 
 

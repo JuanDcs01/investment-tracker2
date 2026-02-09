@@ -154,13 +154,11 @@ instrument.symbol }}{% endblock %} {% block content %}
             </tr>
             <tr>
               <td><strong>Costo Total:</strong></td>
-              <td class="text-end">{{ instrument.total_cost|currency }}</td>
+              <td class="text-end">{{ instrument.cost_base|currency }}</td>
             </tr>
             <tr>
               <td><strong>Comisiones Totales:</strong></td>
-              <td class="text-end">
-                {{ instrument.total_commission|currency }}
-              </td>
+              <td class="text-end">{{ instrument.commission|currency }}</td>
             </tr>
           </table>
         </div>

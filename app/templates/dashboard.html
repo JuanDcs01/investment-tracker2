@@ -4,8 +4,7 @@ endblock %} {% block content %}
   <h2 class="mb-4">
     <i class="bi bi-speedometer2"></i> Dashboard de Inversiones
   </h2>
-
-  <!-- Portfolio Summary Cards -->
+ <!-- Portfolio Summary Cards -->
 <div class="row g-3 mb-4 row-cols-1 row-cols-md-5 justify-content-center">    
   <div class="col">
       <div class="card">
@@ -30,9 +29,9 @@ endblock %} {% block content %}
     <div class="col">
         <div class="card">
           <div class="card-body">
-            <h6 class="card-subtitle mb-2 text-muted">Ganancia Mercado</h6>
+            <h6 class="card-subtitle mb-2 text-muted">Ganancia no Realizada</h6>
             <h3
-              class="card-title mb-0 {% if portfolio.net_return >= 0 %}text-success{% else %}text-danger{% endif %}"
+              class="card-title mb-0 {% if portfolio.total_market_gain >= 0 %}text-success{% else %}text-danger{% endif %}"
             >
               {{ portfolio.total_market_gain|currency }}
               <small class="fs-6">
@@ -42,38 +41,7 @@ endblock %} {% block content %}
           </div>
         </div>
       </div>
-      <div class="col">
-        <div class="card">
-          <div class="card-body">
-            <h6 class="card-subtitle mb-2 opacity-75">Ganancia Hoy</h6>
-            <h3
-              class="card-title mb-0 {% if portfolio.today_gain >= 0 %}text-success{% else %}text-danger{% endif %}"
-            >
-              {{ portfolio.today_gain|currency }}
-              <small class="fs-6">
-                ({{ portfolio.today_gain_percentage|percentage }})
-              </small>
-            </h3>
-          </div>
-        </div>
-      </div>
-      <div class="col">
-        <div class="card">
-          <div class="card-body">
-            <h6 class="card-subtitle mb-2 text-muted">Retorno Neto (Real)</h6>
-            <h3
-              class="card-title mb-0 {% if portfolio.net_return >= 0 %}text-success{% else %}text-danger{% endif %}"
-            >
-              {{ portfolio.net_return|currency }}
-              <small class="fs-6">
-                ({{ portfolio.net_return_percentage|percentage }})
-              </small>
-            </h3>
-          </div>
-        </div>
-      </div>
     </div>
-
     <!-- Instruments Table -->
     <div class="card mb-4">
       <div
@@ -101,13 +69,12 @@ endblock %} {% block content %}
                 <th>Símbolo</th>
                 <th>Tipo</th>
                 <th class="text-end">Cantidad</th>
-                <th class="text-end">AVG Precio Compra</th>
                 <th class="text-end">Precio Actual</th>
-                <th class="text-end">Costo Total</th>
-                <th class="text-end">Valor Actual</th>
-                <th class="text-end">Ganancia Mercado</th>
-                <th class="text-end">Ganancia Hoy</th>
-                <th class="text-end">Retorno Neto</th>
+                <th class="text-end">Inversión Actual</th>
+                <th class="text-end">Comisiones</th>
+                <th class="text-end">Valor Mercado</th>
+                <th class="text-end">G. No Realizada</th>
+                <th class="text-end">g. Realizada</th>
                 <th class="text-center">Acciones</th>
               </tr>
             </thead>
@@ -123,36 +90,27 @@ endblock %} {% block content %}
                   </span>
                 </td>
                 <td class="text-end">{{ inst.quantity|number(4) }}</td>
-                <td class="text-end">
-                  {{ inst.average_purchase_price|currency }}
-                </td>
                 <td class="text-end">{{ inst.current_price|currency }}</td>
-                <td class="text-end">{{ inst.total_cost|currency }}</td>
-                <td class="text-end">{{ inst.current_value|currency }}</td>
-                <td
-                  class="text-end {% if inst.market_gain >= 0 %}text-success{% else %}text-danger{% endif %}"
-                >
-                  {{ inst.market_gain|currency }}
+                <td class="text-end">{{ inst.cost_base|currency }}</td>
+                <td class="text-end">{{ inst.comission|currency }}</td>
+                <td class="text-end">
+                  {{ inst.current_value|currency }}
                   <br />
-                  <small>
-                  ({{ inst.market_gain_percentage|percentage }})
-                  </small>
                 </td>
                 <td
-                  class="text-end {% if inst.today_gain >= 0 %}text-success{% else %}text-danger{% endif %}"
+                  class="text-end {% if inst.unrealized_gain >= 0 %}text-success{% else %}text-danger{% endif %}"
                 >
-                  {{ inst.today_gain|currency }}
+                  {{ inst.unrealized_gain|currency }}
                   <br />
                   <small>
-                  ({{ inst.today_gain_percentage|percentage }})
+                  ({{ inst.unrealized_gain_percentage|percentage }})
                   </small>
                 </td>
                 <td
                   class="text-end {% if inst.net_return >= 0 %}text-success{% else %}text-danger{% endif %}"
                 >
-                  {{ inst.net_return|currency }}
+                  {# { inst.realized_gain|currency } #}
                   <br />
-                  <small>({{ inst.net_return_percentage|percentage }})</small>
                 </td>
                 <td class="text-center">
                   <a
@@ -181,6 +139,11 @@ endblock %} {% block content %}
               </tr>
               {% endif %}
             </tbody>
+            <tr>
+                <td colspan="4" class="text-end"><strong>TOTAL:</strong></td>
+                <td class="text-end">{{ portfolio.total_cost_base|currency }}</td>
+                <td class="text-end">{{ portfolio.total_comission|currency }}</td>
+            </tr>
           </table>
         </div>
       </div>
