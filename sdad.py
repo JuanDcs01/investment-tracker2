@@ -30,3 +30,57 @@
         </div>
       </div>
 
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- Portfolio Summary Cards -->
+<div class="row g-3 mb-4 row-cols-1 row-cols-md-5 justify-content-center">    
+  <div class="col">
+      <div class="card">
+        <div class="card-body">
+          <h6 class="card-subtitle mb-2 opacity-75">Total Invertido</h6>
+          <h3 class="card-title mb-0">
+            {{ portfolio.total_invested|currency }}
+          </h3>
+        </div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="card">
+        <div class="card-body">
+          <h6 class="card-subtitle mb-2 opacity-75">Valor Actual de Mercado</h6>
+          <h3 class="card-title mb-0">
+            {{ portfolio.current_market_value|currency }}
+          </h3>
+        </div>
+      </div>
+    </div>
+    <div class="col">
+        <div class="card">
+          <div class="card-body">
+            <h6 class="card-subtitle mb-2 text-muted">Ganancia no Realizada</h6>
+            <h3
+              class="card-title mb-0 {% if portfolio.total_market_gain >= 0 %}text-success{% else %}text-danger{% endif %}"
+            >
+              {{ portfolio.total_market_gain|currency }}
+              <small class="fs-6">
+                ({{ portfolio.market_gain_percentage|percentage }})
+              </small>
+            </h3>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+                <td class="text-end">{{ portfolio.total_cost_base|currency }}</td>
+                <td class="text-end">{{ portfolio.total_comission|currency }}</td>

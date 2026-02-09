@@ -107,7 +107,7 @@ endblock %} {% block content %}
                   </small>
                 </td>
                 <td
-                  class="text-end {% if inst.net_return >= 0 %}text-success{% else %}text-danger{% endif %}"
+                  class="text-end {% if inst.realized_gain >= 0 %}text-success{% else %}text-danger{% endif %}"
                 >
                   {# { inst.realized_gain|currency } #}
                   <br />

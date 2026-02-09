@@ -28,12 +28,12 @@ class PortfolioService:
                 return {
                     'total_invested': 0.0,
                     'current_market_value': 0.0,
-                    'today_gain': 0.0,
-                    'today_gain_percentage': 0.0,      # Añade esto
                     'total_market_gain': 0.0,          # Añade esto
                     'unrealized_gain_percentage': 0.0,      # Añade esto
-                    'net_return': 0.0,
-                    'net_return_percentage': 0.0
+                    'total_invested': 0.0,
+                    'market_gain_percentage': 0.0, # <--- Nuevo
+                    'total_comission': 0.0,
+                    'total_cost_base': 0.0
                 }
                 
         # Fetch current prices for all instruments
@@ -91,12 +91,8 @@ class PortfolioService:
         return {
             'total_invested': round(total_invested, 2),
             'current_market_value': round(current_market_value, 2),
-            'today_gain': round(today_gain, 2),
-            'today_gain_percentage': round(today_gain_percentage, 2), # <--- Nuevo
             'total_market_gain': round(total_market_gain, 2),         # <--- Nuevo
             'market_gain_percentage': round(market_gain_percentage, 2), # <--- Nuevo
-            'net_return': round(net_return, 2),
-            'net_return_percentage': round(net_return_percentage, 2),
             'total_comission': round(total_comission, 2),
             'total_cost_base': round(total_cost_base, 2)
         }
@@ -123,7 +119,6 @@ class PortfolioService:
         )
         
         quantity = float(instrument.quantity)
-        avg_price = float(instrument.average_purchase_price)
         cost_base = float(instrument.cost_base)
         comission = float(instrument.commission)
         
@@ -164,7 +159,7 @@ class PortfolioService:
 
         # Market gain percentage (based on average purchase price)
         unrealized_gain_percentage = (
-            (unrealized_gain / cost_base * 100) if current_price and avg_price > 0 else 0.0
+            (unrealized_gain / cost_base * 100) if current_price > 0 else 0.0
         )
         
         # Today's gain
@@ -178,12 +173,6 @@ class PortfolioService:
         #     today_gain = 0.0
         #     today_gain_percentage = 0.0
         
-        # Net return (considering commissions)
-        net_return = current_value - cost_base
-        net_return_percentage = (
-            (net_return / cost_base * 100) if cost_base > 0 else 0
-        )
-        
         return {
             'symbol': instrument.symbol,
             'type': instrument.instrument_type,
@@ -194,14 +183,10 @@ class PortfolioService:
             'unrealized_gain': round(unrealized_gain, 2),
             'unrealized_gain_percentage': round(unrealized_gain_percentage, 2),
             'realized_gain': round(realized_gain, 2),
-
-            'average_purchase_price': avg_price,
             'current_price': current_price if current_price else 0.0,
             # 'market_gain': round(market_gain, 2),
             # 'today_gain': round(today_gain, 2),
             # 'today_gain_percentage': round(today_gain_percentage, 2),  # NUEVO - PORCENTAJE POR INSTRUMENTO
-            'net_return': round(net_return, 2),
-            'net_return_percentage': round(net_return_percentage, 2),
             'instrument_id': instrument.id
         }
     
