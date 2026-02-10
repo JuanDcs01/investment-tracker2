@@ -211,7 +211,7 @@ def register_transaction(instrument_id):
         )
         
         # Calculate total
-        transaction.calculate_total()
+        transaction.calculate_base_amount()
         
         db.session.add(transaction)
         db.session.commit()

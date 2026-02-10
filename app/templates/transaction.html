@@ -184,6 +184,7 @@ instrument.symbol }}{% endblock %} {% block content %}
                   <th>Tipo</th>
                   <th class="text-end">Cantidad</th>
                   <th class="text-end">Precio</th>
+                  <th class="text-end">Monto base</th>
                   <th class="text-end">Comisión</th>
                   <th class="text-end">Total</th>
                 </tr>
@@ -201,6 +202,7 @@ instrument.symbol }}{% endblock %} {% block content %}
                   </td>
                   <td class="text-end">{{ trans.quantity|number(12) }}</td>
                   <td class="text-end">{{ trans.price|currency }}</td>
+                  <td class="text-end">{{ trans.base_amount|currency }}</td>
                   <td class="text-end">{{ trans.commission|currency }}</td>
                   <td class="text-end">
                     <strong>{{ trans.total_paid|currency }}</strong>

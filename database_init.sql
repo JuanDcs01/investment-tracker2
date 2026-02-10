@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS transactions (
     quantity DECIMAL(20, 12) NOT NULL,
     price DECIMAL(20, 8) NOT NULL,
     commission DECIMAL(20, 2) NOT NULL DEFAULT 0,
-    total_paid DECIMAL(20, 2) NOT NULL,
+    base_amount DECIMAL(20, 2) NOT NULL,
     transaction_date DATE NOT NULL,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_instrument_id (instrument_id),

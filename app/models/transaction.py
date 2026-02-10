@@ -21,14 +21,14 @@ class Transaction(db.Model):
     quantity = db.Column(db.Numeric(20, 12), nullable=False)
     price = db.Column(db.Numeric(20, 8), nullable=False)
     commission = db.Column(db.Numeric(20, 2), nullable=False, default=0)
-    total_paid = db.Column(db.Numeric(20, 2), nullable=False)
+    base_amount = db.Column(db.Numeric(20, 2), nullable=False)
     transaction_date = db.Column(db.Date, nullable=False, default=datetime.utcnow)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     
     def __repr__(self):
         return (
             f'<Transaction {self.transaction_type} '
-            f'{self.quantity} @ {self.total_paid}>'
+            f'{self.quantity} @ {self.base_amount}>'
         )
     
     def to_dict(self):
@@ -40,18 +40,24 @@ class Transaction(db.Model):
             'quantity': float(self.quantity),
             'price': float(self.price),
             'commission': float(self.commission),
-            'total_paid': float(self.total_paid),
+            'base_amount': float(self.base_amount),
             'transaction_date': self.transaction_date.isoformat() if self.transaction_date else None,
             'created_at': self.created_at.isoformat() if self.created_at else None
         }
     
-    def calculate_total(self):
+    def calculate_base_amount(self):
+        """invertido sin comisiones"""
+        base_amount = float(self.quantity) * float(self.price)
+        self.base_amount = base_amount
+
+        return self.base_amount
+    
+    @property
+    def total_paid(self):
         """Calculate total paid for the transaction."""
         base_amount = float(self.quantity) * float(self.price)
         
         if self.transaction_type == 'buy':
-            self.total_paid = base_amount + float(self.commission)
+            return base_amount + float(self.commission)
         else:  # sell
-            self.total_paid = base_amount - float(self.commission)
-        
-        return self.total_paid
+            return base_amount - float(self.commission)
