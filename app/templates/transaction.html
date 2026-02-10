@@ -55,8 +55,9 @@ instrument.symbol }}{% endblock %} {% block content %}
                 required
               />
               <div class="form-text">
-                Máximo 12 decimales. {% if instrument.quantity > 0 %}
-                Disponible: {{ instrument.quantity|number(12) }} {% endif %}
+                Máximo 12 decimales. {% if metrics.current_quantity > 0 %}
+                Disponible: {{ metrics.current_quantity|number(12) }} {% endif
+                %}
               </div>
             </div>
 
@@ -144,21 +145,23 @@ instrument.symbol }}{% endblock %} {% block content %}
           <table class="table table-sm mb-0">
             <tr>
               <td><strong>Cantidad:</strong></td>
-              <td class="text-end">{{ instrument.quantity|number(12) }}</td>
+              <td class="text-end">
+                {{ metrics.current_quantity|format_smart_decimal }}
+              </td>
             </tr>
             <tr>
               <td><strong>Precio Promedio:</strong></td>
               <td class="text-end">
-                {{ instrument.average_purchase_price|currency }}
+                {#{ instrument.average_purchase_price|currency }#}
               </td>
             </tr>
             <tr>
               <td><strong>Costo Total:</strong></td>
-              <td class="text-end">{{ instrument.cost_base|currency }}</td>
+              <td class="text-end">{#{ instrument.cost_base|currency }#}</td>
             </tr>
             <tr>
               <td><strong>Comisiones Totales:</strong></td>
-              <td class="text-end">{{ instrument.commission|currency }}</td>
+              <td class="text-end">{#{ instrument.commission|currency }#}</td>
             </tr>
           </table>
         </div>
@@ -263,7 +266,7 @@ instrument.symbol }}{% endblock %} {% block content %}
     document.getElementById('transaction_type').addEventListener('change', function() {
         const quantityInput = document.getElementById('quantity');
         if (this.value === 'sell') {
-            quantityInput.max = {{ instrument.quantity }};
+            quantityInput.max = {{ metrics.current_quantity }};
         } else {
             quantityInput.removeAttribute('max');
         }

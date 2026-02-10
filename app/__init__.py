@@ -2,6 +2,14 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from config import config
+import logging
+
+# Configura el registro en un archivo llamado 'errores.log'
+logging.basicConfig(
+    filename='errores.log', 
+    level=logging.ERROR,
+    format='%(asctime)s:%(levelname)s:%(message)s'
+)
 
 # Initialize extensions
 db = SQLAlchemy()
@@ -73,3 +81,19 @@ def register_template_filters(app):
             return f"{float(value):,.{decimals}f}"
         except (ValueError, TypeError):
             return "0.00"
+        
+    @app.template_filter('format_smart_decimal')
+    def format_smart_decimal(value):
+        if not value:
+            return "0.00"
+        
+        # Formatea a 12 decimales
+        formatted = f"{value:.12f}".rstrip('0').rstrip('.')
+        
+        # Si es un entero o no tiene suficientes decimales, asegura el .00
+        if '.' not in formatted:
+            return f"{formatted}.00"
+        if len(formatted.split('.')[1]) < 2:
+            return f"{value:.2f}"
+            
+        return formatted

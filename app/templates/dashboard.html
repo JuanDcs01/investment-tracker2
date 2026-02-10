@@ -4,396 +4,414 @@ endblock %} {% block content %}
   <h2 class="mb-4">
     <i class="bi bi-speedometer2"></i> Dashboard de Inversiones
   </h2>
- <!-- Portfolio Summary Cards -->
-<div class="row g-3 mb-4 row-cols-1 row-cols-md-5 justify-content-center">    
-  <div class="col">
-      <div class="card">
-        <div class="card-body">
-          <h6 class="card-subtitle mb-2 opacity-75">Total Invertido</h6>
-          <h3 class="card-title mb-0">
-            {{ portfolio.total_invested|currency }}
-          </h3>
-        </div>
-      </div>
-    </div>
-    <div class="col">
-      <div class="card">
-        <div class="card-body">
-          <h6 class="card-subtitle mb-2 opacity-75">Valor Actual de Mercado</h6>
-          <h3 class="card-title mb-0">
-            {{ portfolio.current_market_value|currency }}
-          </h3>
-        </div>
-      </div>
-    </div>
-    <div class="col">
-        <div class="card">
+
+  <div class="row g-3 mb-4">
+    <div class="row g-3 mb-4 row-cols-1 row-cols-sm-2 row-cols-md-5">
+      <div class="col">
+        <div class="card h-100">
           <div class="card-body">
-            <h6 class="card-subtitle mb-2 text-muted">Ganancia no Realizada</h6>
+            <h6 class="card-subtitle mb-2 text-muted">Total Invertido</h6>
+            <h3 class="card-title mb-0">
+              {{ portfolio.total_invested|currency }}
+            </h3>
+          </div>
+        </div>
+      </div>
+
+      <div class="col">
+        <div class="card h-100">
+          <div class="card-body">
+            <h6 class="card-subtitle mb-2 text-muted">Valor Mercado</h6>
+            <h3 class="card-title mb-0">
+              {{ portfolio.current_market_value|currency }}
+            </h3>
+          </div>
+        </div>
+      </div>
+
+      <div class="col">
+        <div class="card h-100">
+          <div class="card-body">
+            <h6 class="card-subtitle mb-2 text-muted">G. no Realizada</h6>
             <h3
-              class="card-title mb-0 {% if portfolio.total_market_gain >= 0 %}text-success{% else %}text-danger{% endif %}"
+              class="card-title mb-0 {% if portfolio.unrealized_gain >= 0 %}text-success{% else %}text-danger{% endif %}"
             >
-              {{ portfolio.total_market_gain|currency }}
-              <small class="fs-6">
-                ({{ portfolio.market_gain_percentage|percentage }})
-              </small>
+              {{ portfolio.unrealized_gain|currency }}
+              <small class="fs-6"
+                >({{ portfolio.unrealized_gain_percentage|percentage }})</small
+              >
+            </h3>
+          </div>
+        </div>
+      </div>
+
+      <div class="col">
+        <div class="card h-100">
+          <div class="card-body">
+            <h6 class="card-subtitle mb-2 text-muted">
+              <i class="bi bi-cash-coin"></i> G. Realizada
+            </h6>
+            <h3
+              class="card-title mb-0 {% if portfolio.realized_gain >= 0 %}text-success{% else %}text-danger{% endif %}"
+            >
+              {{ portfolio.realized_gain|currency }}
+              <small class="fs-6"
+                >({{ portfolio.realized_gain_percentage|percentage }})</small
+              >
+            </h3>
+          </div>
+        </div>
+      </div>
+
+      <div class="col">
+        <div class="card h-100">
+          <div class="card-body">
+            <h6 class="card-subtitle mb-2 text-muted">
+              <i class="bi bi-cash-coin"></i> G. Total
+            </h6>
+            <h3
+              class="card-title mb-0 {% if portfolio.total_gain >= 0 %}text-success{% else %}text-danger{% endif %}"
+            >
+              {{ portfolio.total_gain|currency }}
+              <small class="fs-6"
+                >({{ portfolio.total_gain_percentage|percentage }})</small
+              >
             </h3>
           </div>
         </div>
       </div>
     </div>
-    <!-- Instruments Table -->
-    <div class="card mb-4">
-      <div
-        class="card-header d-flex justify-content-between align-items-center"
-      >
-        <h5 class="mb-0"><i class="bi bi-wallet2"></i> Mis Instrumentos</h5>
-        <div>
-          <button class="btn btn-primary" onclick="refreshPrices()">
-            <i class="bi bi-arrow-clockwise"></i>
-          </button>
-          <button
-            class="btn btn-primary"
-            data-bs-toggle="modal"
-            data-bs-target="#addInstrumentModal"
-          >
-            <i class="bi bi-plus"></i> Agregar Instrumento
-          </button>
-        </div>
-      </div>
-      <div class="card-body p-0">
-        <div class="table-responsive">
-          <table class="table table-hover mb-0">
-            <thead class="table-light">
-              <tr>
-                <th>Símbolo</th>
-                <th>Tipo</th>
-                <th class="text-end">Cantidad</th>
-                <th class="text-end">Precio Actual</th>
-                <th class="text-end">Inversión Actual</th>
-                <th class="text-end">Comisiones</th>
-                <th class="text-end">Valor Mercado</th>
-                <th class="text-end">G. No Realizada</th>
-                <th class="text-end">g. Realizada</th>
-                <th class="text-center">Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% if instruments %} {% for inst in instruments %}
-              <tr>
-                <td><strong>{{ inst.symbol }}</strong></td>
-                <td>
-                  <span
-                    class="badge {% if inst.type == 'stock' %}bg-primary {% elif inst.type == 'etf' %}bg-success {% else %}bg-warning{% endif %}"
-                  >
-                    {{ inst.type|upper }}
-                  </span>
-                </td>
-                <td class="text-end">{{ inst.quantity|number(4) }}</td>
-                <td class="text-end">{{ inst.current_price|currency }}</td>
-                <td class="text-end">{{ inst.cost_base|currency }}</td>
-                <td class="text-end">{{ inst.comission|currency }}</td>
-                <td class="text-end">
-                  {{ inst.current_value|currency }}
-                  <br />
-                </td>
-                <td
-                  class="text-end {% if inst.unrealized_gain >= 0 %}text-success{% else %}text-danger{% endif %}"
-                >
-                  {{ inst.unrealized_gain|currency }}
-                  <br />
-                  <small>
-                  ({{ inst.unrealized_gain_percentage|percentage }})
-                  </small>
-                </td>
-                <td
-                  class="text-end {% if inst.realized_gain >= 0 %}text-success{% else %}text-danger{% endif %}"
-                >
-                  {# { inst.realized_gain|currency } #}
-                  <br />
-                </td>
-                <td class="text-center">
-                  <a
-                    href="{{ url_for('main.register_transaction', instrument_id=inst.instrument_id) }}"
-                    class="btn btn-sm btn-outline-primary"
-                    title="Registrar Movimiento"
-                  >
-                    <i class="bi bi-plus"></i>
-                  </a>
-                  <button
-                    class="btn btn-sm btn-outline-danger"
-                    onclick="deleteInstrument({{ inst.instrument_id }}, '{{ inst.symbol }}')"
-                    title="Eliminar"
-                  >
-                    <i class="bi bi-trash"></i>
-                  </button>
-                </td>
-              </tr>
-              {% endfor %} {% else %}
-              <tr>
-                <td colspan="11" class="text-center py-5 text-muted">
-                  <i class="bi bi-inbox fs-1 d-block mb-3"></i>
-                  No hay instrumentos en el portafolio. Agrega tu primer
-                  instrumento para comenzar.
-                </td>
-              </tr>
-              {% endif %}
-            </tbody>
-            <tr>
-                <td colspan="4" class="text-end"><strong>TOTAL:</strong></td>
-                <td class="text-end">{{ portfolio.total_cost_base|currency }}</td>
-                <td class="text-end">{{ portfolio.total_comission|currency }}</td>
-            </tr>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- Charts Section -->
-    {% if instruments %}
-    <h2 class="mb-4">
-      <i class="bi bi-pie-chart"></i> Distribución del Portafolio
-    </h2>
-
-    <div class="row g-4 mb-4">
-      <!-- By Type Chart -->
-      <div class="col-md-4">
-        <div class="card">
-          <div class="card-header bg-light">
-            <h6 class="mb-0">Distribución por Tipo</h6>
-          </div>
-          <div class="card-body d-flex justify-content-center border">
-            <canvas id="typeChart"></canvas>
-          </div>
-        </div>
-      </div>
-
-      <!-- By Risk Chart -->
-      <div class="col-md-4">
-        <div class="card">
-          <div class="card-header bg-light">
-            <h6 class="mb-0">Distribución por Riesgo</h6>
-          </div>
-          <div class="card-body d-flex justify-content-center border">
-            <canvas id="riskChart"></canvas>
-          </div>
-        </div>
-      </div>
-
-      <!-- By Instrument Chart -->
-      <div class="col-md-4">
-        <div class="card">
-          <div class="card-header bg-light">
-            <h6 class="mb-0">Distribución por Instrumento</h6>
-          </div>
-          <div class="card-body d-flex justify-content-center border">
-            <canvas id="instrumentChart"></canvas>
-          </div>
-        </div>
-      </div>
-    </div>
-    {% endif %}
   </div>
 
-  <!-- Add Instrument Modal -->
-  <div class="modal fade" id="addInstrumentModal" tabindex="-1">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">
-            <i class="bi bi-plus-circle"></i> Agregar Instrumento
-          </h5>
+  {{ portfolio.transactions}} {{ portfolio.total_invested}}
+  <!-- Instruments Table -->
+  <div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h5 class="mb-0"><i class="bi bi-wallet2"></i> Mis Instrumentos</h5>
+      <div>
+        <button class="btn btn-primary" onclick="refreshPrices()">
+          <i class="bi bi-arrow-clockwise"></i>
+        </button>
+        <button
+          class="btn btn-primary"
+          data-bs-toggle="modal"
+          data-bs-target="#addInstrumentModal"
+        >
+          <i class="bi bi-plus"></i> Agregar Instrumento
+        </button>
+      </div>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Símbolo</th>
+              <th>Tipo</th>
+              <th class="text-end">Cantidad</th>
+              <th class="text-end">Precio Actual</th>
+              <th class="text-end">Valor Mercado</th>
+              <th class="text-end">G. No Realizada</th>
+              <th class="text-end">G. Realizada</th>
+              <th class="text-end">G. Total</th>
+              <th class="text-center">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% if instruments %} {% for inst in instruments %}
+            <tr>
+              <td><strong>{{ inst.symbol }}</strong></td>
+              <td>
+                <span
+                  class="badge {% if inst.type == 'stock' %}bg-primary {% elif inst.type == 'etf' %}bg-success {% else %}bg-warning{% endif %}"
+                >
+                  {{ inst.type|upper }}
+                </span>
+                {{ inst.buy|upper }}
+              </td>
+              <td class="text-end">{{ inst.current_quantity|number(4) }}</td>
+              <td class="text-end">{{ inst.current_price|currency }}</td>
+              <td class="text-end">{{ inst.current_value|currency }}</td>
+
+              <td
+                class="text-end {% if inst.unrealized_gain >= 0 %}text-success{% else %}text-danger{% endif %}"
+              >
+                {{ inst.unrealized_gain|currency }}
+                <br />
+                <small
+                  >({{ inst.unrealized_gain_percentage|percentage }})</small
+                >
+              </td>
+
+              <td
+                class="text-end {% if inst.realized_gain >= 0 %}text-success{% else %}text-danger{% endif %}"
+              >
+                {{ inst.realized_gain|currency }}
+                <br />
+                <small>({{ inst.realized_gain_percentage|percentage }})</small>
+              </td>
+
+              <td
+                class="text-end {% if inst.total_gain >= 0 %}text-success{% else %}text-danger{% endif %}"
+              >
+                {{ inst.total_gain|currency }}
+                <br />
+                <small>({{ inst.total_gain_percentage|percentage }})</small>
+              </td>
+
+              <td class="text-center">
+                <a
+                  href="{{ url_for('main.register_transaction', instrument_id=inst.instrument_id) }}"
+                  class="btn btn-sm btn-outline-primary"
+                  title="Registrar Movimiento"
+                >
+                  <i class="bi bi-plus"></i>
+                </a>
+                <button
+                  class="btn btn-sm btn-outline-danger"
+                  onclick="deleteInstrument({{ inst.instrument_id }}, '{{ inst.symbol }}')"
+                  title="Eliminar"
+                >
+                  <i class="bi bi-trash"></i>
+                </button>
+              </td>
+            </tr>
+            {% endfor %} {% else %}
+            <tr>
+              <td colspan="9" class="text-center py-5 text-muted">
+                <i class="bi bi-inbox fs-1 d-block mb-3"></i>
+                No hay instrumentos en el portafolio.
+              </td>
+            </tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts Section -->
+  {% if instruments %}
+  <h2 class="mb-4">
+    <i class="bi bi-pie-chart"></i> Distribución del Portafolio
+  </h2>
+
+  <div class="row g-4 mb-4">
+    <!-- By Type Chart -->
+    <div class="col-md-4">
+      <div class="card">
+        <div class="card-header bg-light">
+          <h6 class="mb-0">Distribución por Tipo</h6>
+        </div>
+        <div class="card-body d-flex justify-content-center">
+          <canvas id="typeChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- By Risk Chart -->
+    <div class="col-md-4">
+      <div class="card">
+        <div class="card-header bg-light">
+          <h6 class="mb-0">Distribución por Riesgo</h6>
+        </div>
+        <div class="card-body d-flex justify-content-center">
+          <canvas id="riskChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- By Instrument Chart -->
+    <div class="col-md-4">
+      <div class="card">
+        <div class="card-header bg-light">
+          <h6 class="mb-0">Distribución por Instrumento</h6>
+        </div>
+        <div class="card-body d-flex justify-content-center">
+          <canvas id="instrumentChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<!-- Add Instrument Modal -->
+<div class="modal fade" id="addInstrumentModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="bi bi-plus-circle"></i> Agregar Instrumento
+        </h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+        ></button>
+      </div>
+      <form id="addInstrumentForm">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="instrument_type" class="form-label"
+              >Tipo de Instrumento</label
+            >
+            <select
+              class="form-select"
+              id="instrument_type"
+              name="instrument_type"
+              required
+            >
+              <option value="">Seleccione...</option>
+              <option value="stock">Stock (Acción)</option>
+              <option value="etf">ETF</option>
+              <option value="crypto">Criptomoneda</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label for="symbol" class="form-label">Símbolo</label>
+            <input
+              type="text"
+              class="form-control"
+              id="symbol"
+              name="symbol"
+              required
+              placeholder="Ej: AAPL, BTC"
+            />
+            <div class="form-text">
+              Para criptomonedas no es necesario incluir -USD
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
           <button
             type="button"
-            class="btn-close"
+            class="btn btn-secondary"
             data-bs-dismiss="modal"
-          ></button>
+          >
+            Cancelar
+          </button>
+          <button type="submit" class="btn btn-primary">
+            <i class="bi bi-check-circle"></i> Agregar
+          </button>
         </div>
-        <form id="addInstrumentForm">
-          <div class="modal-body">
-            <div class="mb-3">
-              <label for="instrument_type" class="form-label"
-                >Tipo de Instrumento</label
-              >
-              <select
-                class="form-select"
-                id="instrument_type"
-                name="instrument_type"
-                required
-              >
-                <option value="">Seleccione...</option>
-                <option value="stock">Stock (Acción)</option>
-                <option value="etf">ETF</option>
-                <option value="crypto">Criptomoneda</option>
-              </select>
-            </div>
-            <div class="mb-3">
-              <label for="symbol" class="form-label">Símbolo</label>
-              <input
-                type="text"
-                class="form-control"
-                id="symbol"
-                name="symbol"
-                required
-                placeholder="Ej: AAPL, BTC"
-              />
-              <div class="form-text">
-                Para criptomonedas no es necesario incluir -USD
-              </div>
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button
-              type="button"
-              class="btn btn-secondary"
-              data-bs-dismiss="modal"
-            >
-              Cancelar
-            </button>
-            <button type="submit" class="btn btn-primary">
-              <i class="bi bi-check-circle"></i> Agregar
-            </button>
-          </div>
-        </form>
-      </div>
+      </form>
     </div>
   </div>
-
-  {% endblock %} {% block extra_js %}
-  <script>
-        // Add Instrument Form Handler
-        document.getElementById('addInstrumentForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-
-            const formData = new FormData(this);
-            const submitBtn = this.querySelector('button[type="submit"]');
-            submitBtn.disabled = true;
-
-            try {
-                const response = await fetch('{{ url_for("main.add_instrument") }}', {
-                    method: 'POST',
-                    body: formData
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    alert(data.message);
-                    location.reload();
-                } else {
-                    alert(data.message);
-                }
-            } catch (error) {
-                alert('Error al agregar el instrumento');
-            } finally {
-                submitBtn.disabled = false;
-            }
-        });
-
-        // Delete Instrument Function
-        async function deleteInstrument(instrumentId, symbol) {
-            if (!confirm(`¿Está seguro de eliminar ${symbol}? Esta acción no se puede deshacer.`)) {
-                return;
-            }
-
-            try {
-                const response = await fetch(`/delete-instrument/${instrumentId}`, {
-                    method: 'POST'
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    alert(data.message);
-                    location.reload();
-                } else {
-                    alert(data.message);
-                }
-            } catch (error) {
-                alert('Error al eliminar el instrumento');
-            }
-        }
-
-        // Charts
-        {% if instruments %}
-        const distribution = {{ distribution|tojson }};
-
-        // Helper function to create doughnut chart
-    function createDoughnutChart(canvasId, data, title) {
-        const ctx = document.getElementById(canvasId).getContext('2d');
-        const total = data.reduce((acc, d) => acc + d.value, 0);
-
-        new Chart(ctx, {
-            type: 'doughnut',
-            plugins: [ChartDataLabels], // Mantenemos el plugin para ver etiquetas dentro
-            data: {
-                labels: data.map(d => d.label),
-                datasets: [{
-                    data: data.map(d => d.value),
-                    // Nueva paleta de colores claros/pasteles
-                    backgroundColor: [
-                        '#A2D2FF', '#B9FBC0', '#FEFAE0', '#FFCFD2',
-                        '#E1DBFF', '#FDE4CF', '#CFFAF1', '#F1F1F1'
-                    ],
-                    borderWidth: 1,
-                    borderColor: '#ffffff'
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: true,
-                plugins: {
-                    legend: {
-                        position: 'bottom'
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                const label = context.label || '';
-                                const value = context.parsed;
-                                const percentage = ((value / total) * 100).toFixed(2);
-                                return `${label}: $${value.toLocaleString()} (${percentage}%)`;
-                            }
-                        }
-                    },
-                    datalabels: {
-                        color: '#000000',      // Texto negro puro
-                        anchor: 'center',      // Centrado en el segmento
-                        align: 'center',
-                        font: {
-                            weight: 'bold',    // En negrita
-                            size: 11
-                        },
-                        // Sin bordes ni sombras
-                        formatter: (value, ctx) => {
-                            let percentage = ((value / total) * 100).toFixed(1) + "%";
-                            let formattedValue = "$" + Math.round(value).toLocaleString();
-                            return formattedValue + "\n" + percentage;
-                        },
-                        textAlign: 'center',
-                        display: function(context) {
-                            // Solo muestra si el trozo es lo bastante grande (evita amontonar)
-                            return (context.dataset.data[context.dataIndex] / total) > 0.05;
-                        }
-                    }
-                }
-            }
-        });
-    }
-
-        // Create charts
-        if (distribution.by_type && distribution.by_type.length > 0) {
-            createDoughnutChart('typeChart', distribution.by_type, 'Por Tipo');
-        }
-
-        if (distribution.by_risk && distribution.by_risk.length > 0) {
-            createDoughnutChart('riskChart', distribution.by_risk, 'Por Riesgo');
-        }
-
-        if (distribution.by_instrument && distribution.by_instrument.length > 0) {
-            createDoughnutChart('instrumentChart', distribution.by_instrument, 'Por Instrumento');
-        }
-        {% endif %}
-  </script>
-  {% endblock %}
 </div>
+
+{% endblock %} {% block extra_js %}
+<script>
+  // Add Instrument Form Handler
+  document.getElementById('addInstrumentForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      const formData = new FormData(this);
+      const submitBtn = this.querySelector('button[type="submit"]');
+      submitBtn.disabled = true;
+
+      try {
+          const response = await fetch('{{ url_for("main.add_instrument") }}', {
+              method: 'POST',
+              body: formData
+          });
+
+          const data = await response.json();
+
+          if (data.success) {
+              alert(data.message);
+              location.reload();
+          } else {
+              alert(data.message);
+          }
+      } catch (error) {
+          alert('Error al agregar el instrumento');
+      } finally {
+          submitBtn.disabled = false;
+      }
+  });
+
+  // Delete Instrument Function
+  async function deleteInstrument(instrumentId, symbol) {
+      if (!confirm(`¿Está seguro de eliminar ${symbol}? Esta acción no se puede deshacer.`)) {
+          return;
+      }
+
+      try {
+          const response = await fetch(`/delete-instrument/${instrumentId}`, {
+              method: 'POST'
+          });
+
+          const data = await response.json();
+
+          if (data.success) {
+              alert(data.message);
+              location.reload();
+          } else {
+              alert(data.message);
+          }
+      } catch (error) {
+          alert('Error al eliminar el instrumento');
+      }
+  }
+
+  // Charts
+  {% if instruments %}
+  const distribution = {{ distribution|tojson }};
+
+  // Helper function to create doughnut chart
+  function createDoughnutChart(canvasId, data, title) {
+      const ctx = document.getElementById(canvasId).getContext('2d');
+      const total = data.reduce((acc, d) => acc + d.value, 0);
+
+      new Chart(ctx, {
+          type: 'doughnut',
+          data: {
+              labels: data.map(d => d.label),
+              datasets: [{
+                  data: data.map(d => d.value),
+                  backgroundColor: [
+                      '#A2D2FF', '#B9FBC0', '#FEFAE0', '#FFCFD2',
+                      '#E1DBFF', '#FDE4CF', '#CFFAF1', '#F1F1F1'
+                  ],
+                  borderWidth: 1,
+                  borderColor: '#ffffff'
+              }]
+          },
+          options: {
+              responsive: true,
+              maintainAspectRatio: true,
+              plugins: {
+                  legend: {
+                      position: 'bottom'
+                  },
+                  tooltip: {
+                      callbacks: {
+                          label: function(context) {
+                              const label = context.label || '';
+                              const value = context.parsed;
+                              const percentage = ((value / total) * 100).toFixed(2);
+                              return `${label}: $${value.toLocaleString()} (${percentage}%)`;
+                          }
+                      }
+                  }
+              }
+          }
+      });
+  }
+
+  // Create charts
+  if (distribution.by_type && distribution.by_type.length > 0) {
+      createDoughnutChart('typeChart', distribution.by_type, 'Por Tipo');
+  }
+
+  if (distribution.by_risk && distribution.by_risk.length > 0) {
+      createDoughnutChart('riskChart', distribution.by_risk, 'Por Riesgo');
+  }
+
+  if (distribution.by_instrument && distribution.by_instrument.length > 0) {
+      createDoughnutChart('instrumentChart', distribution.by_instrument, 'Por Instrumento');
+  }
+  {% endif %}
+</script>
+{% endblock %}

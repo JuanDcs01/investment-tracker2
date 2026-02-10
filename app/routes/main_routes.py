@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, request, jsonify, redirect, url_fo
 from app import db
 from app.models import Instrument, Transaction
 from app.services import MarketService, PortfolioService
-from app.utils import Validator, ValidationError
+from app.utils import Validator
 from datetime import datetime
 from decimal import Decimal
 import logging
@@ -40,7 +40,7 @@ def index():
         
     except Exception as e:
         logger.error(f"Error loading dashboard: {str(e)}")
-        flash(f'Error al cargar el dashboard {e}', 'danger')
+        flash('Error al cargar el dashboard', 'danger')
         return render_template(
             'dashboard.html',
             portfolio={},
@@ -81,14 +81,10 @@ def add_instrument():
                 'message': f'El símbolo {symbol} no existe en Yahoo Finance'
             }), 400
         
-        # Create new instrument
+        # Create new instrument (sin campos obsoletos)
         instrument = Instrument(
             symbol=symbol,
-            instrument_type=instrument_type,
-            quantity=0,
-            average_purchase_price=0,
-            cost_base=0,
-            commission=0
+            instrument_type=instrument_type
         )
         
         db.session.add(instrument)
@@ -143,11 +139,16 @@ def register_transaction(instrument_id):
             instrument_id=instrument_id
         ).order_by(Transaction.transaction_date.desc()).all()
         
+        # Get current metrics for display
+        metrics = PortfolioService.calculate_instrument_metrics(instrument)
+        
         return render_template(
             'transaction.html',
             instrument=instrument,
-            transactions=transactions
-        )    
+            transactions=transactions,
+            metrics=metrics
+        )
+    
     # POST - Register new transaction
     try:
         # Get form data
@@ -187,11 +188,14 @@ def register_transaction(instrument_id):
             flash(error, 'danger')
             return redirect(url_for('main.register_transaction', instrument_id=instrument_id))
         
-        # Check if selling more than owned
+        # Check if selling more than owned (using FIFO calculation)
         if transaction_type == 'sell':
-            if quantity > instrument.quantity:
+            metrics = PortfolioService.calculate_instrument_metrics(instrument)
+            current_quantity = Decimal(str(metrics['current_quantity']))
+            
+            if quantity > current_quantity:
                 flash(
-                    f'No puede vender {quantity} unidades. Solo posee {instrument.quantity}',
+                    f'No puede vender {quantity} unidades. Solo posee {current_quantity}',
                     'danger'
                 )
                 return redirect(url_for('main.register_transaction', instrument_id=instrument_id))
@@ -210,10 +214,6 @@ def register_transaction(instrument_id):
         transaction.calculate_total()
         
         db.session.add(transaction)
-        
-        # Update instrument metrics
-        instrument.update_metrics()
-        
         db.session.commit()
         
         flash(
@@ -225,7 +225,7 @@ def register_transaction(instrument_id):
     except Exception as e:
         logger.error(f"Error registering transaction: {str(e)}")
         db.session.rollback()
-        flash('Error al registrar la transacción {e}', 'danger')
+        flash('Error al registrar la transacción', 'danger')
         return redirect(url_for('main.register_transaction', instrument_id=instrument_id))
 
 

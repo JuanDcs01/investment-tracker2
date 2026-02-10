@@ -1,11 +1,9 @@
-from typing import Dict, List, Optional
-from decimal import Decimal
+from typing import Dict, List
 from app.models import Instrument
 from app.models import Transaction
 from app.services.market_service import MarketService
-from decimal import Decimal
+from app.services.fifo import FIFOService
 import logging
-
 
 logger = logging.getLogger(__name__)
 
@@ -25,168 +23,144 @@ class PortfolioService:
             dict: Portfolio metrics including totals and gains
         """
         if not instruments:
-                return {
-                    'total_invested': 0.0,
-                    'current_market_value': 0.0,
-                    'total_market_gain': 0.0,          # Añade esto
-                    'unrealized_gain_percentage': 0.0,      # Añade esto
-                    'total_invested': 0.0,
-                    'market_gain_percentage': 0.0, # <--- Nuevo
-                    'total_comission': 0.0,
-                    'total_cost_base': 0.0
-                }
-                
-        # Fetch current prices for all instruments
+            return {
+                'total_invested': 0.0,
+                'current_market_value': 0.0,
+                'unrealized_gain': 0.0,
+                'unrealized_gain_percentage': 0.0,
+                'realized_gain': 0.0,
+                'realized_gain_percentage': 0.0,
+                'total_gain': 0.0,
+                'total_gain_percentage': 0.0
+            }
+        
+        # Fetch current prices
         symbols_data = [
             {'symbol': inst.symbol, 'instrument_type': inst.instrument_type}
             for inst in instruments
         ]
         current_prices = MarketService.get_batch_prices(symbols_data)
         
-        # Fetch previous close prices for today's gain
-        previous_prices = {}
-        for inst in instruments:
-            prev_price = MarketService.get_previous_close(
-                inst.symbol,
-                inst.instrument_type
-            )
-            if prev_price:
-                previous_prices[inst.symbol] = prev_price
-        
+        # Acumuladores
         total_invested = 0.0
         current_market_value = 0.0
-        previous_market_value = 0.0
-        total_market_gain = 0.0
-        total_comission = 0.0
-        total_cost_base = 0.0
+        total_realized_gain = 0.0
+        total_unrealized_gain = 0.0
+        total_cost_basis_sold = 0.0
         
         for inst in instruments:
-            total_comission += float(inst.commission)
-            total_cost_base += float(inst.cost_base) 
+            current_price = current_prices.get(inst.symbol, 0)
             
-            current_price = current_prices.get(inst.symbol)
-            if current_price:
-                current_value = float(inst.quantity) * current_price
-                current_market_value += current_value
-                
-                # Calcula y suma la ganancia de mercado individual
-                avg_price = float(inst.average_purchase_price)
-                total_market_gain += (current_price - avg_price) * float(inst.quantity)
-                # Previous market value for today's gain
-                prev_price = previous_prices.get(inst.symbol)
-                if prev_price:
-                    previous_market_value += float(inst.quantity) * prev_price
-
-        total_invested = total_comission + total_cost_base
-
-        # Calculate metrics
-        today_gain = current_market_value - previous_market_value
-        net_return = current_market_value - total_invested
-        net_return_percentage = (
-            (net_return / total_invested * 100) if total_invested > 0 else 0
+            # Si el precio es 0 o None, el cálculo de ganancia no realizada fallará
+            # o devolverá valores inconsistentes.
+            if current_price is None:
+                current_price = 0.0
+            
+            transactions = inst.transactions.order_by('transaction_date').all()
+            
+            # Si acabas de añadir el instrumento y NO tiene transacciones:
+            if not transactions:
+                continue # Saltarlo es seguro, pero no debe anular el diccionario
+            
+            # Calcular métricas con FIFO
+            metrics = FIFOService.calculate_instrument_totals(transactions, current_price)
+            
+            # Acumular valores
+            total_invested += metrics['total_investment']
+            current_market_value += metrics['current_value']
+            total_realized_gain += metrics['realized_gain']
+            total_unrealized_gain += metrics['unrealized_gain']
+            total_cost_basis_sold += metrics['cost_basis_sold']
+        
+        # Calcular porcentajes globales
+        total_gain = total_realized_gain + total_unrealized_gain
+        
+        unrealized_gain_percentage = (
+            (total_unrealized_gain / (total_invested - total_cost_basis_sold) * 100)
+            if (total_invested - total_cost_basis_sold) > 0 else 0.0
         )
-        market_gain_percentage = (total_market_gain / total_invested * 100) if total_invested > 0 else 0
-        today_gain_percentage = (today_gain / previous_market_value * 100) if previous_market_value > 0 else 0
+        
+        realized_gain_percentage = (
+            (total_realized_gain / total_cost_basis_sold * 100)
+            if total_cost_basis_sold > 0 else 0.0
+        )
+        
+        total_gain_percentage = (
+            (total_gain / total_invested * 100)
+            if total_invested > 0 else 0.0
+        )
         
         return {
             'total_invested': round(total_invested, 2),
             'current_market_value': round(current_market_value, 2),
-            'total_market_gain': round(total_market_gain, 2),         # <--- Nuevo
-            'market_gain_percentage': round(market_gain_percentage, 2), # <--- Nuevo
-            'total_comission': round(total_comission, 2),
-            'total_cost_base': round(total_cost_base, 2)
+            'unrealized_gain': round(total_unrealized_gain, 2),
+            'unrealized_gain_percentage': round(unrealized_gain_percentage, 2),
+            'realized_gain': round(total_realized_gain, 2),
+            'realized_gain_percentage': round(realized_gain_percentage, 2),
+            'total_gain': round(total_gain, 2),
+            'total_gain_percentage': round(total_gain_percentage, 2)
         }
     
     @staticmethod
     def calculate_instrument_metrics(instrument: Instrument) -> Dict:
         """
-        Calculate metrics for a single instrument.
+        Calculate metrics for a single instrument using FIFO.
         
         Args:
             instrument: Instrument object
             
         Returns:
-            dict: Instrument metrics with percentages
+            dict: Instrument metrics
         """
         current_price = MarketService.get_current_price(
             instrument.symbol,
             instrument.instrument_type
         )
         
-        previous_price = MarketService.get_previous_close(
-            instrument.symbol,
-            instrument.instrument_type
-        )
+        if not current_price:
+            current_price = 0.0
         
-        quantity = float(instrument.quantity)
-        cost_base = float(instrument.cost_base)
-        comission = float(instrument.commission)
+        # Obtener transacciones ordenadas
+        transactions = instrument.transactions.order_by('transaction_date').all()
         
-        # Valor actual de mercado
-        current_value = quantity * current_price if current_price else 0.0
-
-        # Ganancia no realizada
-        unrealized_gain = current_value - cost_base
-
-        # Ganancia realizada
-        realized_gain = Decimal('0.0')
-        sell_transactions = instrument.transactions.filter_by(transaction_type='sell').all()
-        for t in sell_transactions:
-            # Convertir cantidad y precio a Decimal
-            qty_sold = Decimal(str(t.quantity))
-            price_sold = Decimal(str(t.price))
-            comm_sale = Decimal(str(t.commission))
-            
-            # Cantidad comprada total hasta esa venta
-            buy_tx_before = instrument.transactions.filter_by(transaction_type='buy').filter(Transaction.id <= t.id).all()
-            total_bought_before = sum(Decimal(str(tx.quantity)) for tx in buy_tx_before)
-            
-            if total_bought_before == 0:
-                continue  # evitar división por cero
-
-            proportion_sold = qty_sold / total_bought_before
-
-            # Costo proporcional de la venta
-            cost_sold = instrument.cost_base * proportion_sold
-
-            # Comisiones proporcionales de compra + comisión de la venta
-            commission_buy_total = sum(Decimal(str(tx.commission)) for tx in buy_tx_before)
-            commission_proportional = commission_buy_total * proportion_sold
-            commission_total = commission_proportional + comm_sale
-
-            # Ganancia neta realizada de esta venta
-            realized_gain += (price_sold * qty_sold) - cost_sold - commission_total
-
-        # Market gain percentage (based on average purchase price)
-        unrealized_gain_percentage = (
-            (unrealized_gain / cost_base * 100) if current_price > 0 else 0.0
-        )
+        if not transactions:
+            return {
+                'symbol': instrument.symbol,
+                'type': instrument.instrument_type,
+                'current_quantity': 0.0,
+                'average_price': 0.0,
+                'current_price': 0.0,
+                'current_value': 0.0,
+                'cost_basis': 0.0,
+                'unrealized_gain': 0.0,
+                'unrealized_gain_percentage': 0.0,
+                'realized_gain': 0.0,
+                'realized_gain_percentage': 0.0,
+                'total_gain': 0.0,
+                'total_gain_percentage': 0.0,
+                'total_investment': 0.0,
+                'instrument_id': instrument.id
+            }
         
-        # Today's gain
-        # if current_price and previous_price:
-        #     today_gain = (current_price - previous_price) * quantity
-        #     # Today's gain percentage (based on previous close)
-        #     today_gain_percentage = (
-        #         ((current_price - previous_price) / previous_price * 100) if previous_price > 0 else 0.0
-        #     )
-        # else:
-        #     today_gain = 0.0
-        #     today_gain_percentage = 0.0
+        # Calcular usando FIFO
+        metrics = FIFOService.calculate_instrument_totals(transactions, current_price)
         
         return {
             'symbol': instrument.symbol,
             'type': instrument.instrument_type,
-            'quantity': quantity,
-            'cost_base': round(cost_base, 2),
-            'comission': comission,
-            'current_value': round(current_value, 2),
-            'unrealized_gain': round(unrealized_gain, 2),
-            'unrealized_gain_percentage': round(unrealized_gain_percentage, 2),
-            'realized_gain': round(realized_gain, 2),
-            'current_price': current_price if current_price else 0.0,
-            # 'market_gain': round(market_gain, 2),
-            # 'today_gain': round(today_gain, 2),
-            # 'today_gain_percentage': round(today_gain_percentage, 2),  # NUEVO - PORCENTAJE POR INSTRUMENTO
+            'current_quantity': metrics['current_quantity'],
+            'average_price': metrics['average_price'],
+            'current_price': current_price,
+            'current_value': metrics['current_value'],
+            'cost_basis': metrics['cost_basis'],
+            'unrealized_gain': metrics['unrealized_gain'],
+            'unrealized_gain_percentage': metrics['unrealized_gain_percentage'],
+            'realized_gain': metrics['realized_gain'],
+            'realized_gain_percentage': metrics['realized_gain_percentage'],
+            'total_gain': metrics['total_gain'],
+            'total_gain_percentage': metrics['total_gain_percentage'],
+            'total_investment': metrics['total_investment'],
+            'total_commissions': metrics['total_commissions'],
             'instrument_id': instrument.id
         }
     
@@ -223,7 +197,13 @@ class PortfolioService:
         
         for inst in instruments:
             current_price = current_prices.get(inst.symbol, 0)
-            current_value = float(inst.quantity) * current_price
+            transactions = inst.transactions.order_by('transaction_date').all()
+            
+            if not transactions or not current_price:
+                continue
+            
+            unrealized = FIFOService.calculate_unrealized_gain(transactions, current_price)
+            current_value = unrealized['current_value']
             total_value += current_value
             
             # By type

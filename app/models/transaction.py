@@ -28,7 +28,7 @@ class Transaction(db.Model):
     def __repr__(self):
         return (
             f'<Transaction {self.transaction_type} '
-            f'{self.quantity} @ {self.price}>'
+            f'{self.quantity} @ {self.total_paid}>'
         )
     
     def to_dict(self):
