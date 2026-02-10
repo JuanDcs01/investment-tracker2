@@ -244,3 +244,7 @@ def refresh_prices():
             'success': False,
             'message': 'Error al actualizar precios'
         }), 500
+    
+@bp.route('/glosario')
+def glosario_web():
+    return render_template('glosario.html')

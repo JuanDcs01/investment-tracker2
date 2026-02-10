@@ -2,98 +2,109 @@
 endblock %} {% block content %}
 <div class="container-fluid">
   <h2 class="mb-4">
-    <i class="bi bi-speedometer2"></i> Dashboard de Inversiones
+    <i class="bi bi-speedometer2"></i> Rendimiento de Inversiones
   </h2>
 
   <div class="row g-3 mb-4">
-    <div class="row g-3 mb-4 row-cols-1 row-cols-sm-2 row-cols-md-5">
-      <div class="col">
-        <div class="card h-100">
-          <div class="card-body">
-            <h6 class="card-subtitle mb-2 text-muted">Total Invertido</h6>
-            <h3 class="card-title mb-0">
-              {{ portfolio.total_invested|currency }}
-            </h3>
-          </div>
+    <div class="col-xl">
+      <div class="card h-100">
+        <div class="card-body">
+          <h6 class="card-subtitle mb-2 text-muted">
+            <i class="bi bi-bar-chart-fill"></i> Inversión Actual
+          </h6>
+          <h3 class="card-title mb-0">
+            {{ portfolio.current_investment|currency }}
+          </h3>
+          <small class="text-muted">En posiciones abiertas</small>
         </div>
       </div>
+    </div>
 
-      <div class="col">
-        <div class="card h-100">
-          <div class="card-body">
-            <h6 class="card-subtitle mb-2 text-muted">Valor Mercado</h6>
-            <h3 class="card-title mb-0">
-              {{ portfolio.current_market_value|currency }}
-            </h3>
-          </div>
+    <div class="col-xl">
+      <div class="card h-100">
+        <div class="card-body">
+          <h6 class="card-subtitle mb-2 text-muted">
+            <i class="bi bi-bank"></i> Valor Actual de Mercado
+          </h6>
+          <h3 class="card-title mb-0">
+            {{ portfolio.current_market_value|currency }}
+          </h3>
+          <small class="text-muted">Valor de tus posiciones</small>
         </div>
       </div>
+    </div>
 
-      <div class="col">
-        <div class="card h-100">
-          <div class="card-body">
-            <h6 class="card-subtitle mb-2 text-muted">G. no Realizada</h6>
-            <h3
-              class="card-title mb-0 {% if portfolio.unrealized_gain >= 0 %}text-success{% else %}text-danger{% endif %}"
+    <div class="col-xl">
+      <div class="card h-100">
+        <div class="card-body">
+          <h6 class="card-subtitle mb-2 text-muted">
+            <i class="bi bi-hourglass"></i> Ganancia no Realizada
+          </h6>
+          <h3
+            class="card-title mb-0 {% if portfolio.unrealized_gain >= 0 %}text-success{% else %}text-danger{% endif %}"
+          >
+            {{ portfolio.unrealized_gain|currency }}
+            <small class="fs-6"
+              >({{ portfolio.unrealized_gain_percentage|percentage }})</small
             >
-              {{ portfolio.unrealized_gain|currency }}
-              <small class="fs-6"
-                >({{ portfolio.unrealized_gain_percentage|percentage }})</small
-              >
-            </h3>
-          </div>
+          </h3>
+          <small class="text-muted">Posición actual</small>
         </div>
       </div>
+    </div>
 
-      <div class="col">
-        <div class="card h-100">
-          <div class="card-body">
-            <h6 class="card-subtitle mb-2 text-muted">
-              <i class="bi bi-cash-coin"></i> G. Realizada
-            </h6>
-            <h3
-              class="card-title mb-0 {% if portfolio.realized_gain >= 0 %}text-success{% else %}text-danger{% endif %}"
+    <div class="col-xl">
+      <div class="card h-100 border-primary">
+        <div class="card-body">
+          <h6 class="card-subtitle mb-2 text-muted">
+            <i class="bi bi-cash-coin"></i> Ganancia Realizada
+          </h6>
+          <h3
+            class="card-title mb-0 {% if portfolio.realized_gain >= 0 %}text-success{% else %}text-danger{% endif %}"
+          >
+            {{ portfolio.realized_gain|currency }}
+            <small class="fs-6"
+              >({{ portfolio.realized_gain_percentage|percentage }})</small
             >
-              {{ portfolio.realized_gain|currency }}
-              <small class="fs-6"
-                >({{ portfolio.realized_gain_percentage|percentage }})</small
-              >
-            </h3>
-          </div>
+          </h3>
+          <small class="text-muted">De ventas pasadas</small>
         </div>
       </div>
+    </div>
 
-      <div class="col">
-        <div class="card h-100">
-          <div class="card-body">
-            <h6 class="card-subtitle mb-2 text-muted">
-              <i class="bi bi-cash-coin"></i> G. Total
-            </h6>
-            <h3
-              class="card-title mb-0 {% if portfolio.total_gain >= 0 %}text-success{% else %}text-danger{% endif %}"
+    <div class="col-xl">
+      <div class="card h-100 border-success">
+        <div class="card-body">
+          <h6 class="card-subtitle mb-2 text-muted">
+            <i class="bi bi-trophy"></i> Ganancia Total
+          </h6>
+          <h3
+            class="card-title mb-0 {% if portfolio.total_gain >= 0 %}text-success{% else %}text-danger{% endif %}"
+          >
+            {{ portfolio.total_gain|currency }}
+            <small class="fs-6"
+              >({{ portfolio.total_gain_percentage|percentage }})</small
             >
-              {{ portfolio.total_gain|currency }}
-              <small class="fs-6"
-                >({{ portfolio.total_gain_percentage|percentage }})</small
-              >
-            </h3>
-          </div>
+          </h3>
+          <small class="text-muted">Realizada + No Realizada</small>
         </div>
       </div>
     </div>
   </div>
 
-  {{ portfolio.transactions}} {{ portfolio.total_invested}}
   <!-- Instruments Table -->
   <div class="card mb-4">
-    <div class="card-header d-flex justify-content-between align-items-center">
+    <div
+      class="card-header d-flex justify-content-between align-items-center flex-wrap gap-3"
+    >
       <h5 class="mb-0"><i class="bi bi-wallet2"></i> Mis Instrumentos</h5>
-      <div>
+
+      <div class="d-flex gap-2">
         <button class="btn btn-primary" onclick="refreshPrices()">
           <i class="bi bi-arrow-clockwise"></i>
         </button>
         <button
-          class="btn btn-primary"
+          class="btn btn-primary text-nowrap"
           data-bs-toggle="modal"
           data-bs-target="#addInstrumentModal"
         >
@@ -110,6 +121,7 @@ endblock %} {% block content %}
               <th>Tipo</th>
               <th class="text-end">Cantidad</th>
               <th class="text-end">Precio Actual</th>
+              <th class="text-end">Inversión Actual</th>
               <th class="text-end">Valor Mercado</th>
               <th class="text-end">G. No Realizada</th>
               <th class="text-end">G. Realizada</th>
@@ -127,12 +139,17 @@ endblock %} {% block content %}
                 >
                   {{ inst.type|upper }}
                 </span>
-                {{ inst.buy|upper }}
               </td>
               <td class="text-end">{{ inst.current_quantity|number(4) }}</td>
               <td class="text-end">{{ inst.current_price|currency }}</td>
+
+              <!-- Inversión Actual -->
+              <td class="text-end">{{ inst.current_investment|currency }}</td>
+
+              <!-- Valor Mercado -->
               <td class="text-end">{{ inst.current_value|currency }}</td>
 
+              <!-- Ganancia No Realizada -->
               <td
                 class="text-end {% if inst.unrealized_gain >= 0 %}text-success{% else %}text-danger{% endif %}"
               >
@@ -143,6 +160,7 @@ endblock %} {% block content %}
                 >
               </td>
 
+              <!-- Ganancia Realizada -->
               <td
                 class="text-end {% if inst.realized_gain >= 0 %}text-success{% else %}text-danger{% endif %}"
               >
@@ -151,6 +169,7 @@ endblock %} {% block content %}
                 <small>({{ inst.realized_gain_percentage|percentage }})</small>
               </td>
 
+              <!-- Ganancia Total (AGREGADA DE VUELTA) -->
               <td
                 class="text-end {% if inst.total_gain >= 0 %}text-success{% else %}text-danger{% endif %}"
               >
@@ -178,9 +197,10 @@ endblock %} {% block content %}
             </tr>
             {% endfor %} {% else %}
             <tr>
-              <td colspan="9" class="text-center py-5 text-muted">
+              <td colspan="10" class="text-center py-5 text-muted">
                 <i class="bi bi-inbox fs-1 d-block mb-3"></i>
-                No hay instrumentos en el portafolio.
+                No hay instrumentos en el portafolio. Agrega tu primer
+                instrumento para comenzar.
               </td>
             </tr>
             {% endif %}
@@ -302,64 +322,83 @@ endblock %} {% block content %}
 
 {% endblock %} {% block extra_js %}
 <script>
-  // Add Instrument Form Handler
-  document.getElementById('addInstrumentForm').addEventListener('submit', async function(e) {
-      e.preventDefault();
+    // Add Instrument Form Handler
+    document.getElementById('addInstrumentForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
 
-      const formData = new FormData(this);
-      const submitBtn = this.querySelector('button[type="submit"]');
-      submitBtn.disabled = true;
+        const formData = new FormData(this);
+        const submitBtn = this.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
 
-      try {
-          const response = await fetch('{{ url_for("main.add_instrument") }}', {
-              method: 'POST',
-              body: formData
-          });
+        try {
+            const response = await fetch('{{ url_for("main.add_instrument") }}', {
+                method: 'POST',
+                body: formData
+            });
 
-          const data = await response.json();
+            const data = await response.json();
 
-          if (data.success) {
-              alert(data.message);
-              location.reload();
-          } else {
-              alert(data.message);
-          }
-      } catch (error) {
-          alert('Error al agregar el instrumento');
-      } finally {
-          submitBtn.disabled = false;
-      }
-  });
+            if (data.success) {
+                alert(data.message);
+                location.reload();
+            } else {
+                alert(data.message);
+            }
+        } catch (error) {
+            alert('Error al agregar el instrumento');
+        } finally {
+            submitBtn.disabled = false;
+        }
+    });
 
-  // Delete Instrument Function
-  async function deleteInstrument(instrumentId, symbol) {
-      if (!confirm(`¿Está seguro de eliminar ${symbol}? Esta acción no se puede deshacer.`)) {
-          return;
-      }
+    // Delete Instrument Function
+    async function deleteInstrument(instrumentId, symbol) {
+        if (!confirm(`¿Está seguro de eliminar ${symbol}? Esta acción no se puede deshacer.`)) {
+            return;
+        }
 
-      try {
-          const response = await fetch(`/delete-instrument/${instrumentId}`, {
-              method: 'POST'
-          });
+        try {
+            const response = await fetch(`/delete-instrument/${instrumentId}`, {
+                method: 'POST'
+            });
 
-          const data = await response.json();
+            const data = await response.json();
 
-          if (data.success) {
-              alert(data.message);
-              location.reload();
-          } else {
-              alert(data.message);
-          }
-      } catch (error) {
-          alert('Error al eliminar el instrumento');
-      }
-  }
+            if (data.success) {
+                alert(data.message);
+                location.reload();
+            } else {
+                alert(data.message);
+            }
+        } catch (error) {
+            alert('Error al eliminar el instrumento');
+        }
+    }
 
-  // Charts
-  {% if instruments %}
-  const distribution = {{ distribution|tojson }};
+    // Refresh prices function
+    async function refreshPrices() {
+        try {
+            const response = await fetch('/api/refresh-prices', {
+                method: 'POST'
+            });
 
-  // Helper function to create doughnut chart
+            const data = await response.json();
+
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error al actualizar precios');
+            }
+        } catch (error) {
+            alert('Error al actualizar precios');
+        }
+    }
+
+    // Charts
+    {% if instruments %}
+    const distribution = {{ distribution|tojson }};
+
+    // Helper function to create doughnut chart
   function createDoughnutChart(canvasId, data, title) {
       const ctx = document.getElementById(canvasId).getContext('2d');
       const total = data.reduce((acc, d) => acc + d.value, 0);
@@ -394,24 +433,41 @@ endblock %} {% block content %}
                               return `${label}: $${value.toLocaleString()} (${percentage}%)`;
                           }
                       }
-                  }
+                  },
+              datalabels: {
+                  color: '#000',
+                  font: {
+                      weight: 'bold',
+                      size: 11
+                  },
+                  formatter: function(value, context) {
+                      const percentage = ((value / total) * 100).toFixed(1);
+                      if (percentage > 5) {
+                          return percentage + '%\n$' + value.toLocaleString('en-US', {maximumFractionDigits: 0});
+                      }
+                      return '';
+                  },
+                  anchor: 'center',
+                  align: 'center'
               }
-          }
+              }
+          },
+          plugins: [ChartDataLabels]
       });
   }
 
-  // Create charts
-  if (distribution.by_type && distribution.by_type.length > 0) {
-      createDoughnutChart('typeChart', distribution.by_type, 'Por Tipo');
-  }
+    // Create charts
+    if (distribution.by_type && distribution.by_type.length > 0) {
+        createDoughnutChart('typeChart', distribution.by_type, 'Por Tipo');
+    }
 
-  if (distribution.by_risk && distribution.by_risk.length > 0) {
-      createDoughnutChart('riskChart', distribution.by_risk, 'Por Riesgo');
-  }
+    if (distribution.by_risk && distribution.by_risk.length > 0) {
+        createDoughnutChart('riskChart', distribution.by_risk, 'Por Riesgo');
+    }
 
-  if (distribution.by_instrument && distribution.by_instrument.length > 0) {
-      createDoughnutChart('instrumentChart', distribution.by_instrument, 'Por Instrumento');
-  }
-  {% endif %}
+    if (distribution.by_instrument && distribution.by_instrument.length > 0) {
+        createDoughnutChart('instrumentChart', distribution.by_instrument, 'Por Instrumento');
+    }
+    {% endif %}
 </script>
 {% endblock %}

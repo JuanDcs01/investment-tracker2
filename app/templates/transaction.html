@@ -56,14 +56,14 @@ instrument.symbol }}{% endblock %} {% block content %}
               />
               <div class="form-text">
                 Máximo 12 decimales. {% if metrics.current_quantity > 0 %}
-                Disponible: {{ metrics.current_quantity|number(12) }} {% endif
-                %}
+                Disponible: {{ metrics.current_quantity|format_smart_decimal }}
+                {% endif %}
               </div>
             </div>
 
             <div class="mb-3">
               <label for="price" class="form-label"
-                >Precio de Compra/Venta *</label
+                >Precio de Ejecución *</label
               >
               <div class="input-group">
                 <span class="input-group-text">$</span>
@@ -111,7 +111,7 @@ instrument.symbol }}{% endblock %} {% block content %}
             </div>
 
             <div class="mb-3">
-              <label for="totalDisplay" class="form-label">Total a Pagar</label>
+              <label for="totalDisplay" class="form-label">Total</label>
               <div class="input-group">
                 <span class="input-group-text">$</span>
                 <input
