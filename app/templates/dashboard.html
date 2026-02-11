@@ -361,7 +361,6 @@ endblock %} {% block content %}
               class="form-control"
               id="quantity"
               name="quantity"
-              required
               placeholder="Nuevo saldo total"
             />
           </div>
@@ -375,7 +374,6 @@ endblock %} {% block content %}
               class="form-control"
               id="commissions"
               name="commissions"
-              required
               placeholder="Total de comisiones"
             />
           </div>
@@ -399,159 +397,190 @@ endblock %} {% block content %}
 
 {% endblock %} {% block extra_js %}
 <script>
-    // Add Instrument Form Handler
-    document.getElementById('addInstrumentForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
+      // Add Instrument Form Handler
+      document.getElementById('addInstrumentForm').addEventListener('submit', async function(e) {
+          e.preventDefault();
 
-        const formData = new FormData(this);
-        const submitBtn = this.querySelector('button[type="submit"]');
-        submitBtn.disabled = true;
+          const formData = new FormData(this);
+          const submitBtn = this.querySelector('button[type="submit"]');
+          submitBtn.disabled = true;
 
-        try {
-            const response = await fetch('{{ url_for("main.add_instrument") }}', {
-                method: 'POST',
-                body: formData
-            });
+          try {
+              const response = await fetch('{{ url_for("main.add_instrument") }}', {
+                  method: 'POST',
+                  body: formData
+              });
 
-            const data = await response.json();
+              const data = await response.json();
 
-            if (data.success) {
-                alert(data.message);
-                location.reload();
-            } else {
-                alert(data.message);
-            }
-        } catch (error) {
-            alert('Error al agregar el instrumento');
-        } finally {
-            submitBtn.disabled = false;
-        }
-    });
-
-    // Delete Instrument Function
-    async function deleteInstrument(instrumentId, symbol) {
-        if (!confirm(`¿Está seguro de eliminar ${symbol}? Esta acción no se puede deshacer.`)) {
-            return;
-        }
-
-        try {
-            const response = await fetch(`/delete-instrument/${instrumentId}`, {
-                method: 'POST'
-            });
-
-            const data = await response.json();
-
-            if (data.success) {
-                alert(data.message);
-                location.reload();
-            } else {
-                alert(data.message);
-            }
-        } catch (error) {
-            alert('Error al eliminar el instrumento');
-        }
-    }
-
-    // Refresh prices function
-    async function refreshPrices() {
-        try {
-            const response = await fetch('/api/refresh-prices', {
-                method: 'POST'
-            });
-
-            const data = await response.json();
-
-            if (data.success) {
-                location.reload();
-            } else {
-                alert('Error al actualizar precios');
-            }
-        } catch (error) {
-            alert('Error al actualizar precios');
-        }
-    }
-
-    // Charts
-    {% if instruments %}
-    const distribution = {{ distribution|tojson }};
-
-    // Helper function to create doughnut chart
-  function createDoughnutChart(canvasId, data, title) {
-      const ctx = document.getElementById(canvasId).getContext('2d');
-      const total = data.reduce((acc, d) => acc + d.value, 0);
-
-      new Chart(ctx, {
-          type: 'doughnut',
-          data: {
-              labels: data.map(d => d.label),
-              datasets: [{
-                  data: data.map(d => d.value),
-                  backgroundColor: [
-                      '#A2D2FF', '#B9FBC0', '#FEFAE0', '#FFCFD2',
-                      '#E1DBFF', '#FDE4CF', '#CFFAF1', '#F1F1F1'
-                  ],
-                  borderWidth: 1,
-                  borderColor: '#ffffff'
-              }]
-          },
-          options: {
-              responsive: true,
-              maintainAspectRatio: true,
-              plugins: {
-                  legend: {
-                      position: 'bottom'
-                  },
-                  tooltip: {
-                      callbacks: {
-                          label: function(context) {
-                              const label = context.label || '';
-                              const value = context.parsed;
-                              const percentage = ((value / total) * 100).toFixed(2);
-                              return `${label}: $${value.toLocaleString()} (${percentage}%)`;
-                          }
-                      }
-                  },
-              datalabels: {
-                  color: '#000',
-                  font: {
-                      weight: 'bold',
-                      size: 11
-                  },
-                  formatter: function(value, context) {
-                      const percentage = ((value / total) * 100).toFixed(1);
-                      if (percentage > 5) {
-                          return percentage + '%\n$' + value.toLocaleString('en-US', {maximumFractionDigits: 0});
-                      }
-                      return '';
-                  },
-                  anchor: 'center',
-                  align: 'center'
+              if (data.success) {
+                  alert(data.message);
+                  location.reload();
+              } else {
+                  alert(data.message);
               }
-              }
-          },
-          plugins: [ChartDataLabels]
+          } catch (error) {
+              alert('Error al agregar el instrumento');
+          } finally {
+              submitBtn.disabled = false;
+          }
       });
-  }
 
-    if (distribution.by_instrument) {
-        distribution.by_instrument.push({
-            label: 'Poder de Compra (Cash)',
-            value: {{ wallet.quantity|float }} // Convertimos el Decimal a float para JS
+      // Manejador para Editar Cartera (Wallet)
+      document.getElementById('editWalletForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      const formData = new FormData(this);
+      const submitBtn = this.querySelector('button[type="submit"]');
+      submitBtn.disabled = true;
+
+      try {
+          // Asegúrate de que la ruta coincida con bp.route('/update-wallet')
+          const response = await fetch('{{ url_for("main.update_wallet") }}', {
+              method: 'POST',
+              body: formData
+          });
+
+          const data = await response.json();
+
+          if (data.success) {
+              alert(data.message);
+              location.reload(); // Recarga para ver los nuevos valores
+          } else {
+              alert("Error: " + data.message);
+          }
+      } catch (error) {
+          console.error(error);
+          alert('Error al actualizar la billetera');
+      } finally {
+          submitBtn.disabled = false;
+      }
+  });
+
+      // Delete Instrument Function
+      async function deleteInstrument(instrumentId, symbol) {
+          if (!confirm(`¿Está seguro de eliminar ${symbol}? Esta acción no se puede deshacer.`)) {
+              return;
+          }
+
+          try {
+              const response = await fetch(`/delete-instrument/${instrumentId}`, {
+                  method: 'POST'
+              });
+
+              const data = await response.json();
+
+              if (data.success) {
+                  alert(data.message);
+                  location.reload();
+              } else {
+                  alert(data.message);
+              }
+          } catch (error) {
+              alert('Error al eliminar el instrumento');
+          }
+      }
+
+      // Refresh prices function
+      async function refreshPrices() {
+          try {
+              const response = await fetch('/api/refresh-prices', {
+                  method: 'POST'
+              });
+
+              const data = await response.json();
+
+              if (data.success) {
+                  location.reload();
+              } else {
+                  alert('Error al actualizar precios');
+              }
+          } catch (error) {
+              alert('Error al actualizar precios');
+          }
+      }
+
+      // Charts
+      {% if instruments %}
+      const distribution = {{ distribution|tojson }};
+
+      // Helper function to create doughnut chart
+    function createDoughnutChart(canvasId, data, title) {
+        const ctx = document.getElementById(canvasId).getContext('2d');
+        const total = data.reduce((acc, d) => acc + d.value, 0);
+
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: data.map(d => d.label),
+                datasets: [{
+                    data: data.map(d => d.value),
+                    backgroundColor: [
+                        '#A2D2FF', '#B9FBC0', '#FEFAE0', '#FFCFD2',
+                        '#E1DBFF', '#FDE4CF', '#CFFAF1', '#F1F1F1'
+                    ],
+                    borderWidth: 1,
+                    borderColor: '#ffffff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.parsed;
+                                const percentage = ((value / total) * 100).toFixed(2);
+                                return `${label}: $${value.toLocaleString()} (${percentage}%)`;
+                            }
+                        }
+                    },
+                datalabels: {
+                    color: '#000',
+                    font: {
+                        weight: 'bold',
+                        size: 11
+                    },
+                    formatter: function(value, context) {
+                        const percentage = ((value / total) * 100).toFixed(1);
+                        if (percentage > 5) {
+                            return percentage + '%\n$' + value.toLocaleString('en-US', {maximumFractionDigits: 0});
+                        }
+                        return '';
+                    },
+                    anchor: 'center',
+                    align: 'center'
+                }
+                }
+            },
+            plugins: [ChartDataLabels]
         });
     }
 
-    // Create charts
-    if (distribution.by_type && distribution.by_type.length > 0) {
-        createDoughnutChart('typeChart', distribution.by_type, 'Por Tipo');
-    }
+      if (distribution.by_instrument) {
+          distribution.by_instrument.push({
+              label: 'Poder de Compra (Cash)',
+              value: {{ wallet.quantity|float }} // Convertimos el Decimal a float para JS
+          });
+      }
 
-    if (distribution.by_risk && distribution.by_risk.length > 0) {
-        createDoughnutChart('riskChart', distribution.by_risk, 'Por Riesgo');
-    }
+      // Create charts
+      if (distribution.by_type && distribution.by_type.length > 0) {
+          createDoughnutChart('typeChart', distribution.by_type, 'Por Tipo');
+      }
 
-    if (distribution.by_instrument && distribution.by_instrument.length > 0) {
-        createDoughnutChart('instrumentChart', distribution.by_instrument, 'Por Instrumento');
-    }
-    {% endif %}
+      if (distribution.by_risk && distribution.by_risk.length > 0) {
+          createDoughnutChart('riskChart', distribution.by_risk, 'Por Riesgo');
+      }
+
+      if (distribution.by_instrument && distribution.by_instrument.length > 0) {
+          createDoughnutChart('instrumentChart', distribution.by_instrument, 'Por Instrumento');
+      }
+      {% endif %}
 </script>
 {% endblock %}

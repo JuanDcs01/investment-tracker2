@@ -48,7 +48,7 @@ def index():
             portfolio={},
             instruments=[],
             distribution={},
-
+            wallet= []
         )
 
 
@@ -135,6 +135,7 @@ def delete_instrument(instrument_id):
 def register_transaction(instrument_id):
     """Register a buy or sell transaction."""
     instrument = Instrument.query.get_or_404(instrument_id)
+    wallet = Wallet.query.first()
     
     if request.method == 'GET':
         # Get transaction history
@@ -212,11 +213,14 @@ def register_transaction(instrument_id):
             commission=commission,
             transaction_date=transaction_date
         )
-        
+
+        wallet.quantity -= Decimal(transaction.total_paid)
+
         # Calculate total
         transaction.calculate_base_amount()
         
         db.session.add(transaction)
+        db.session.add(wallet)
         db.session.commit()
         
         flash(
@@ -228,7 +232,7 @@ def register_transaction(instrument_id):
     except Exception as e:
         logger.error(f"Error registering transaction: {str(e)}")
         db.session.rollback()
-        flash('Error al registrar la transacción', 'danger')
+        flash(f'Error al registrar la transacción', 'danger')
         return redirect(url_for('main.register_transaction', instrument_id=instrument_id))
 
 
@@ -255,21 +259,16 @@ def glosario_web():
 @bp.route('/update-wallet', methods=['POST'])
 def update_wallet():
     # Buscamos la única wallet que existe
-    wallet = Wallet.query.first()
-    
-    if not wallet:
-        return jsonify({'success': False, 'message': 'No se encontró la billetera'}), 404
-
     try:
-        # Obtenemos los datos del formulario
-        new_quantitty = Decimal(request.form.get('quantity'))
-        new_commisions = Decimal(request.form.get('commissions'))
+        wallet = Wallet.query.first()
 
-        # Actualizamos los valores
+        new_quantitty = Decimal(request.form.get('quantity')) if request.form.get('quantity') else 0
+        new_commisions = Decimal(request.form.get('commissions')) if request.form.get('commissions') else 0
+
         wallet.quantity += new_quantitty
         wallet.commissions += new_commisions
 
-        if wallet.quantity < 0 or wallet.commissions < 0:
+        if wallet.commissions < 0:
             return jsonify({'success': False, 'message': 'Cantida resultante negativa'})
 
         db.session.commit()

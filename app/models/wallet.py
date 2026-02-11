@@ -22,4 +22,3 @@ class Wallet(db.Model):
             'quantity': float(self.quantity),
             'commissions': float(self.commissions),
         }
-    
