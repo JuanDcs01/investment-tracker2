@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for, flash
 from app import db
-from app.models import Instrument, Transaction
+from app.models import Instrument, Transaction, Wallet
 from app.services import MarketService, PortfolioService
 from app.utils import Validator
 from datetime import datetime
@@ -18,6 +18,7 @@ def index():
     try:
         # Get all instruments
         instruments = Instrument.query.all()
+        wallet = Wallet.query.first()
         
         # Calculate portfolio metrics
         portfolio_metrics = PortfolioService.calculate_portfolio_metrics(instruments)
@@ -35,7 +36,8 @@ def index():
             'dashboard.html',
             portfolio=portfolio_metrics,
             instruments=instrument_data,
-            distribution=distribution
+            distribution=distribution,
+            wallet=wallet
         )
         
     except Exception as e:
@@ -45,7 +47,8 @@ def index():
             'dashboard.html',
             portfolio={},
             instruments=[],
-            distribution={}
+            distribution={},
+
         )
 
 
@@ -248,3 +251,30 @@ def refresh_prices():
 @bp.route('/glosario')
 def glosario_web():
     return render_template('glosario.html')
+
+@bp.route('/update-wallet', methods=['POST'])
+def update_wallet():
+    # Buscamos la única wallet que existe
+    wallet = Wallet.query.first()
+    
+    if not wallet:
+        return jsonify({'success': False, 'message': 'No se encontró la billetera'}), 404
+
+    try:
+        # Obtenemos los datos del formulario
+        new_quantitty = Decimal(request.form.get('quantity'))
+        new_commisions = Decimal(request.form.get('commissions'))
+
+        # Actualizamos los valores
+        wallet.quantity += new_quantitty
+        wallet.commissions += new_commisions
+
+        if wallet.quantity < 0 or wallet.commissions < 0:
+            return jsonify({'success': False, 'message': 'Cantida resultante negativa'})
+
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'Billetera actualizada correctamente'})
+    
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500

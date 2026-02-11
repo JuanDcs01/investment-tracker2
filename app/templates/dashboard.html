@@ -92,6 +92,24 @@ endblock %} {% block content %}
     </div>
   </div>
 
+  <!-- Cartera -->
+  <div class="card mb-4">
+    <div
+      class="card-header d-flex justify-content-between align-items-center flex-wrap gap-3"
+    >
+      <h6 class="m-1">Poder de compra: {{ wallet.quantity|currency }}</h6>
+      <div class="d-flex gap-2">
+        <button
+          class="btn btn-primary text-nowrap"
+          data-bs-toggle="modal"
+          data-bs-target="#editwallet"
+        >
+          <i class="bi bi-pencil"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Instruments Table -->
   <div class="card mb-4">
     <div
@@ -320,6 +338,65 @@ endblock %} {% block content %}
   </div>
 </div>
 
+<div class="modal fade" id="editwallet" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-pencil"></i> Editar Cartera</h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+        ></button>
+      </div>
+      <form id="editWalletForm">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="quantity" class="form-label"
+              >Poder de compra actual: {{ wallet.quantity|currency }}</label
+            >
+            <input
+              type="number"
+              step="0.01"
+              class="form-control"
+              id="quantity"
+              name="quantity"
+              required
+              placeholder="Nuevo saldo total"
+            />
+          </div>
+          <div class="mb-3">
+            <label for="commissions" class="form-label"
+              >Comisiones actuales: {{ wallet.commissions|currency }}</label
+            >
+            <input
+              type="number"
+              step="0.01"
+              class="form-control"
+              id="commissions"
+              name="commissions"
+              required
+              placeholder="Total de comisiones"
+            />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button
+            type="button"
+            class="btn btn-secondary"
+            data-bs-dismiss="modal"
+          >
+            Cancelar
+          </button>
+          <button type="submit" class="btn btn-primary">
+            <i class="bi bi-check-circle"></i> Guardar Cambios
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
 {% endblock %} {% block extra_js %}
 <script>
     // Add Instrument Form Handler
@@ -455,6 +532,13 @@ endblock %} {% block content %}
           plugins: [ChartDataLabels]
       });
   }
+
+    if (distribution.by_instrument) {
+        distribution.by_instrument.push({
+            label: 'Poder de Compra (Cash)',
+            value: {{ wallet.quantity|float }} // Convertimos el Decimal a float para JS
+        });
+    }
 
     // Create charts
     if (distribution.by_type && distribution.by_type.length > 0) {

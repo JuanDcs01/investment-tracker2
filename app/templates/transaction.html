@@ -200,7 +200,9 @@ instrument.symbol }}{% endblock %} {% block content %}
                       {{ trans.transaction_type|upper }}
                     </span>
                   </td>
-                  <td class="text-end">{{ trans.quantity|number(12) }}</td>
+                  <td class="text-end">
+                    {{ trans.quantity|format_smart_decimal }}
+                  </td>
                   <td class="text-end">{{ trans.price|currency }}</td>
                   <td class="text-end">{{ trans.base_amount|currency }}</td>
                   <td class="text-end">{{ trans.commission|currency }}</td>

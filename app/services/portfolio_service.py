@@ -1,5 +1,5 @@
 from typing import Dict, List
-from app.models import Instrument
+from app.models import Instrument, Wallet
 from app.services.market_service import MarketService
 from app.services.fifo import FIFOService
 import logging
@@ -69,6 +69,11 @@ class PortfolioService:
             total_realized_gain += metrics['realized_gain']
             total_unrealized_gain += metrics['unrealized_gain']
             total_cost_basis_sold += metrics['cost_basis_sold']
+
+        
+        wallet = Wallet.query.first()
+
+        total_realized_gain -= float(wallet.commissions)
         
         # Calcular porcentajes globales
         total_gain = total_realized_gain + total_unrealized_gain
