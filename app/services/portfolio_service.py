@@ -74,6 +74,7 @@ class PortfolioService:
         wallet = Wallet.query.first()
 
         total_realized_gain -= float(wallet.commissions)
+        total_realized_gain += float(wallet.dividend)
         
         # Calcular porcentajes globales
         total_gain = total_realized_gain + total_unrealized_gain

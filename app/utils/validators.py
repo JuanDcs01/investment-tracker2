@@ -2,11 +2,9 @@ from decimal import Decimal, InvalidOperation
 from datetime import datetime
 from typing import Optional, Tuple
 
-
 class ValidationError(Exception):
     """Custom exception for validation errors."""
     pass
-
 
 class Validator:
     """Utility class for input validation."""

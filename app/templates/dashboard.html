@@ -338,6 +338,7 @@ endblock %} {% block content %}
   </div>
 </div>
 
+<!-- editar wallet -->
 <div class="modal fade" id="editwallet" tabindex="-1">
   <div class="modal-dialog">
     <div class="modal-content">
@@ -375,6 +376,19 @@ endblock %} {% block content %}
               id="commissions"
               name="commissions"
               placeholder="Total de comisiones"
+            />
+          </div>
+          <div class="mb-3">
+            <label for="dividend" class="form-label"
+              >Dividendos recibidos: {{ wallet.dividend|currency }}</label
+            >
+            <input
+              type="number"
+              step="0.01"
+              class="form-control"
+              id="dividend"
+              name="dividend"
+              placeholder="Total de dividendos recibidos"
             />
           </div>
         </div>

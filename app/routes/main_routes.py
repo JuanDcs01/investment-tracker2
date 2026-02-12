@@ -264,11 +264,13 @@ def update_wallet():
 
         new_quantitty = Decimal(request.form.get('quantity')) if request.form.get('quantity') else 0
         new_commisions = Decimal(request.form.get('commissions')) if request.form.get('commissions') else 0
+        new_dividend = Decimal(request.form.get('dividend')) if request.form.get('dividend') else 0
 
         wallet.quantity += new_quantitty
         wallet.commissions += new_commisions
+        wallet.dividend += new_dividend
 
-        if wallet.commissions < 0:
+        if wallet.commissions < 0 or wallet.dividend < 0:
             return jsonify({'success': False, 'message': 'Cantida resultante negativa'})
 
         db.session.commit()
