@@ -6,6 +6,7 @@ First In, First Out method for calculating realized gains/losses
 from typing import List, Dict
 from decimal import Decimal, ROUND_HALF_UP
 import logging
+from decimal import Decimal
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +28,7 @@ class FIFOService:
         
         if not sells:
             # No hay ventas, retornar ceros
-            total_buy_commissions = sum(float(t.commission) for t in buys) if buys else 0.0
+            total_buy_commissions = sum(Decimal(t.commission) for t in buys) if buys else 0.0
             return {
                 'realized_gain': 0.0,
                 'realized_gain_percentage': 0.0,
@@ -97,17 +98,17 @@ class FIFOService:
         gain_pct = (realized_gain / cost_basis_total * 100) if cost_basis_total > 0 else Decimal('0')
 
         return {
-            'realized_gain': float(realized_gain.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)),
-            'realized_gain_percentage': float(gain_pct.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)),
-            'total_sold': float(total_sold_neto.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)),
-            'cost_basis_sold': float(cost_basis_total.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)),
-            'commissions_paid': float(total_commissions.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP))  # ✅ CLAVE CORRECTA
+            'realized_gain': Decimal(realized_gain.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)),
+            'realized_gain_percentage': Decimal(gain_pct.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)),
+            'total_sold': Decimal(total_sold_neto.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)),
+            'cost_basis_sold': Decimal(cost_basis_total.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)),
+            'commissions_paid': Decimal(total_commissions.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP))  # ✅ CLAVE CORRECTA
         }
     
     @staticmethod
     def calculate_unrealized_gain(
         transactions: List,
-        current_price: float
+        current_price: Decimal
     ) -> Dict:
         """
         Calcula la ganancia no realizada de la posición actual.
@@ -123,8 +124,8 @@ class FIFOService:
         sells = [t for t in transactions if t.transaction_type == 'sell']
         
         # Calcular cantidad actual
-        total_bought = sum(float(t.quantity) for t in buys)
-        total_sold = sum(float(t.quantity) for t in sells)
+        total_bought = sum(Decimal(t.quantity) for t in buys)
+        total_sold = sum(Decimal(t.quantity) for t in sells)
         current_quantity = total_bought - total_sold
         
         if current_quantity <= 0:
@@ -144,9 +145,9 @@ class FIFOService:
         buy_queue = []
         for buy in buys_sorted:
             buy_queue.append({
-                'quantity': float(buy.quantity),
-                'price': float(buy.price),
-                'commission': float(buy.commission)
+                'quantity': Decimal(buy.quantity),
+                'price': Decimal(buy.price),
+                'commission': Decimal(buy.commission)
             })
         
         # Remover lo vendido (FIFO)
@@ -162,8 +163,8 @@ class FIFOService:
                 quantity_to_remove = 0
         
         # Calcular costo base de lo que queda
-        cost_basis = 0.0
-        total_commissions = 0.0
+        cost_basis = Decimal('0.0')
+        total_commissions = Decimal('0.0')
         
         for buy in buy_queue:
             cost_basis += buy['quantity'] * buy['price']
@@ -173,7 +174,7 @@ class FIFOService:
         average_price = cost_basis / current_quantity if current_quantity > 0 else 0.0
         
         # Valor actual
-        current_value = current_quantity * current_price
+        current_value = current_quantity * Decimal(current_price)
         
         # Ganancia no realizada (sin considerar comisiones en el %)
         unrealized_gain = current_value - cost_basis
@@ -194,7 +195,7 @@ class FIFOService:
     @staticmethod
     def calculate_instrument_totals(
         transactions: List,
-        current_price: float
+        current_price: Decimal
     ) -> Dict:
         """
         Calcula todas las métricas para un instrumento.
@@ -211,11 +212,13 @@ class FIFOService:
         unrealized = FIFOService.calculate_unrealized_gain(transactions, current_price)
         
         # Ganancia total = Realizada + No Realizada
-        total_gain = realized['realized_gain'] + unrealized['unrealized_gain']
+        total_gain = Decimal(realized['realized_gain']) + Decimal(unrealized['unrealized_gain'])
         
         # Cálculo de inversión actual
         # = Costo de lo que tienes + Lo que ya recuperaste con ventas
-        total_investment = unrealized['cost_basis'] + realized['cost_basis_sold']
+
+        total_investment = Decimal(unrealized['cost_basis']) + Decimal(realized['cost_basis_sold'])
+
 
         total_gain_percentage = (
             (total_gain / total_investment * 100)
@@ -224,7 +227,7 @@ class FIFOService:
         
         # Total de comisiones pagadas (de compras que aún tienes + de ventas)
         # Nota: Las comisiones de compras vendidas ya están en realized['commissions_paid']
-        total_commissions = realized['commissions_paid'] + unrealized['commissions_paid']
+        total_commissions = Decimal(realized['commissions_paid']) + Decimal(unrealized['commissions_paid'])
         
         return {
             # Ganancias

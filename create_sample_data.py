@@ -1,164 +1,110 @@
 """
-Sample data script for testing Investment Tracker
-Run this to populate the database with test data
+Script de carga de datos corregido basado en el modelo Instrument.
+Se eliminan los argumentos que causaban el TypeError.
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime
 from app import create_app, db
 from app.models import Instrument, Transaction
 from decimal import Decimal
 
 app = create_app('development')
 
-
 def create_sample_data():
-    """Create sample instruments and transactions."""
+    """Puebla la base de datos con los datos del archivo example.txt."""
     
     with app.app_context():
-        # Clear existing data
-        print("Clearing existing data...")
+        # 1. Limpieza total
+        print("Borrando datos antiguos...")
         Transaction.query.delete()
         Instrument.query.delete()
         db.session.commit()
         
-        # Sample instruments
+        # 2. Creación de Instrumentos
+        # Solo usamos campos definidos en tu modelo: symbol, instrument_type, commission
         instruments_data = [
-            {'symbol': 'AAPL', 'type': 'stock'},
-            {'symbol': 'MSFT', 'type': 'stock'},
-            {'symbol': 'SPY', 'type': 'etf'},
+            {'symbol': 'SHLD', 'type': 'etf'},
+            {'symbol': 'AMD', 'type': 'stock'},
+            {'symbol': 'GOOGL', 'type': 'stock'},
+            {'symbol': 'MU', 'type': 'stock'},
             {'symbol': 'QQQ', 'type': 'etf'},
+            {'symbol': 'VOO', 'type': 'etf'},
+            {'symbol': 'SPY', 'type': 'etf'},
             {'symbol': 'BTC', 'type': 'crypto'},
-            {'symbol': 'ETH', 'type': 'crypto'},
+            {'symbol': 'AAPL', 'type': 'stock'},
         ]
         
-        print("\nCreating sample instruments...")
         instruments = {}
-        
         for data in instruments_data:
             instrument = Instrument(
                 symbol=data['symbol'],
                 instrument_type=data['type'],
-                quantity=0,
-                average_purchase_price=0,
-                total_cost=0,
-                total_commission=0
+                commission=0  # Valor inicial por defecto
             )
             db.session.add(instrument)
             instruments[data['symbol']] = instrument
-            print(f"  ✓ Created {data['symbol']} ({data['type']})")
         
         db.session.commit()
         
-        # Sample transactions
-        print("\nCreating sample transactions...")
-        
-        # AAPL transactions
-        transactions = [
+        # 3. Datos de Transacciones extraídos de example.txt
+        raw_transactions = [
+            # SHLD [cite: 1]
+            {'sym': 'SHLD', 'type': 'buy', 'qty': '0.64838', 'px': '77.11', 'comm': '0.15', 'dt': '2026-01-28'},
+            # AMD [cite: 1]
+            {'sym': 'AMD', 'type': 'buy', 'qty': '0.24581', 'px': '203.40', 'comm': '0.15', 'dt': '2026-02-06'},
             # AAPL
-            Transaction(
-                instrument_id=instruments['AAPL'].id,
-                transaction_type='buy',
-                quantity=Decimal('10'),
-                price=Decimal('150.00'),
-                commission=Decimal('5.00'),
-                transaction_date=datetime.now().date() - timedelta(days=30)
-            ),
-            Transaction(
-                instrument_id=instruments['AAPL'].id,
-                transaction_type='buy',
-                quantity=Decimal('5'),
-                price=Decimal('155.00'),
-                commission=Decimal('2.50'),
-                transaction_date=datetime.now().date() - timedelta(days=15)
-            ),
-            
-            # MSFT
-            Transaction(
-                instrument_id=instruments['MSFT'].id,
-                transaction_type='buy',
-                quantity=Decimal('8'),
-                price=Decimal('380.00'),
-                commission=Decimal('4.00'),
-                transaction_date=datetime.now().date() - timedelta(days=25)
-            ),
-            
-            # SPY ETF
-            Transaction(
-                instrument_id=instruments['SPY'].id,
-                transaction_type='buy',
-                quantity=Decimal('20'),
-                price=Decimal('450.00'),
-                commission=Decimal('10.00'),
-                transaction_date=datetime.now().date() - timedelta(days=20)
-            ),
-            
-            # QQQ ETF
-            Transaction(
-                instrument_id=instruments['QQQ'].id,
-                transaction_type='buy',
-                quantity=Decimal('15'),
-                price=Decimal('380.00'),
-                commission=Decimal('7.50'),
-                transaction_date=datetime.now().date() - timedelta(days=18)
-            ),
-            
-            # BTC
-            Transaction(
-                instrument_id=instruments['BTC'].id,
-                transaction_type='buy',
-                quantity=Decimal('0.5'),
-                price=Decimal('45000.00'),
-                commission=Decimal('50.00'),
-                transaction_date=datetime.now().date() - timedelta(days=40)
-            ),
-            Transaction(
-                instrument_id=instruments['BTC'].id,
-                transaction_type='buy',
-                quantity=Decimal('0.3'),
-                price=Decimal('48000.00'),
-                commission=Decimal('30.00'),
-                transaction_date=datetime.now().date() - timedelta(days=10)
-            ),
-            
-            # ETH
-            Transaction(
-                instrument_id=instruments['ETH'].id,
-                transaction_type='buy',
-                quantity=Decimal('5'),
-                price=Decimal('2500.00'),
-                commission=Decimal('20.00'),
-                transaction_date=datetime.now().date() - timedelta(days=35)
-            ),
+            {'sym': 'AAPL', 'type': 'buy', 'qty': '0.07217', 'px': '277.11', 'comm': '0.15', 'dt': '2026-11-26'},
+            {'sym': 'AAPL', 'type': 'sell', 'qty': '0.07217', 'px': '271.44', 'comm': '0.16', 'dt': '2026-12-23'},
+            # GOOGL [cite: 1]
+            {'sym': 'GOOGL', 'type': 'buy', 'qty': '0.02739', 'px': '317.59', 'comm': '0.15', 'dt': '2025-11-24'},
+            {'sym': 'GOOGL', 'type': 'buy', 'qty': '0.03513', 'px': '321.91', 'comm': '0.15', 'dt': '2025-11-25'},
+            {'sym': 'GOOGL', 'type': 'buy', 'qty': '0.14853', 'px': '336.61', 'comm': '0.15', 'dt': '2026-01-27'},
+            {'sym': 'GOOGL', 'type': 'buy', 'qty': '0.23963', 'px': '333.84', 'comm': '0.15', 'dt': '2026-02-04'},
+            # MU [cite: 1, 2]
+            {'sym': 'MU', 'type': 'buy', 'qty': '0.07285', 'px': '274.52', 'comm': '0.15', 'dt': '2025-12-22'},
+            {'sym': 'MU', 'type': 'buy', 'qty': '0.07151', 'px': '279.65', 'comm': '0.15', 'dt': '2025-12-24'},
+            {'sym': 'MU', 'type': 'buy', 'qty': '0.07247', 'px': '344.93', 'comm': '0.15', 'dt': '2026-01-12'},
+            {'sym': 'MU', 'type': 'buy', 'qty': '0.1227', 'px': '407.48', 'comm': '0.15', 'dt': '2026-01-27'},
+            {'sym': 'MU', 'type': 'buy', 'qty': '0.46029', 'px': '434.50', 'comm': '0.15', 'dt': '2026-01-28'},
+            {'sym': 'MU', 'type': 'sell', 'qty': '0.79982', 'px': '424.72', 'comm': '0.16', 'dt': '2026-01-28'},
+            {'sym': 'MU', 'type': 'buy', 'qty': '0.11795', 'px': '423.88', 'comm': '0.15', 'dt': '2026-01-28'},
+            {'sym': 'MU', 'type': 'buy', 'qty': '0.47086', 'px': '424.75', 'comm': '0.15', 'dt': '2026-02-02'},
+            {'sym': 'MU', 'type': 'sell', 'qty': '0.58881', 'px': '440.57', 'comm': '0.16', 'dt': '2026-02-02'},
+            {'sym': 'MU', 'type': 'buy', 'qty': '0.12976', 'px': '385.31', 'comm': '0.15', 'dt': '2026-02-05'},
+            # QQQ [cite: 1]
+            {'sym': 'QQQ', 'type': 'buy', 'qty': '0.15862', 'px': '630.43', 'comm': '0.15', 'dt': '2026-01-27'},
+            {'sym': 'QQQ', 'type': 'buy', 'qty': '0.16558', 'px': '603.92', 'comm': '0.15', 'dt': '2026-02-04'},
+            # VOO [cite: 1, 3]
+            {'sym': 'VOO', 'type': 'buy', 'qty': '0.09204', 'px': '630.16', 'comm': '0.15', 'dt': '2025-12-11'},
+            {'sym': 'VOO', 'type': 'buy', 'qty': '0.05324', 'px': '638.56', 'comm': '0.15', 'dt': '2026-01-12'},
+            {'sym': 'VOO', 'type': 'buy', 'qty': '0.15647', 'px': '639.06', 'comm': '0.15', 'dt': '2026-01-27'},
+            {'sym': 'VOO', 'type': 'buy', 'qty': '0.09481', 'px': '632.83', 'comm': '0.15', 'dt': '2026-02-04'},
+            # SPY [cite: 3]
+            {'sym': 'SPY', 'type': 'buy', 'qty': '0.02393', 'px': '668.34', 'comm': '0.15', 'dt': '2025-11-24'},
+            {'sym': 'SPY', 'type': 'buy', 'qty': '0.05187', 'px': '674.69', 'comm': '0.15', 'dt': '2025-11-25'},
+            {'sym': 'SPY', 'type': 'buy', 'qty': '0.02774', 'px': '685.44', 'comm': '0.15', 'dt': '2025-12-11'},
+            {'sym': 'SPY', 'type': 'buy', 'qty': '0.0432', 'px': '694.33', 'comm': '0.15', 'dt': '2026-01-12'},
+            {'sym': 'SPY', 'type': 'buy', 'qty': '0.14392', 'px': '694.79', 'comm': '0.15', 'dt': '2026-01-27'},
+            # BTC [cite: 4]
+            {'sym': 'BTC', 'type': 'buy', 'qty': '0.00153515', 'px': '65140.21', 'comm': '1.00', 'dt': '2026-02-05'},
         ]
-        
-        for trans in transactions:
-            trans.calculate_total()
-            db.session.add(trans)
-            print(f"  ✓ Created transaction: {trans.transaction_type.upper()} "
-                  f"{trans.quantity} @ ${trans.price}")
-        
-        db.session.commit()
-        
-        # Update instrument metrics
-        print("\nUpdating instrument metrics...")
-        for symbol, instrument in instruments.items():
-            instrument.update_metrics()
-            print(f"  ✓ Updated {symbol}: "
-                  f"Qty={instrument.quantity}, "
-                  f"Avg Price=${instrument.average_purchase_price:.2f}, "
-                  f"Total Cost=${instrument.total_cost:.2f}")
-        
-        db.session.commit()
-        
-        print("\n" + "="*50)
-        print("Sample data created successfully!")
-        print("="*50)
-        print("\nYou can now start the application and view the dashboard.")
 
+        for t in raw_transactions:
+            trans = Transaction(
+                instrument_id=instruments[t['sym']].id,
+                transaction_type=t['type'],
+                quantity=Decimal(t['qty']),
+                price=Decimal(t['px']),
+                commission=Decimal(t['comm']),
+                transaction_date=datetime.strptime(t['dt'], '%Y-%m-%d').date()
+            )
+            # Poblamos el campo base_amount usando tu método del modelo
+            trans.calculate_base_amount()
+            db.session.add(trans)
+            print(f"  ✓ Transacción añadida: {t['sym']} ({t['type']})")
+
+        db.session.commit()
+        print("\n¡Carga de datos finalizada con éxito!")
 
 if __name__ == '__main__':
-    try:
-        create_sample_data()
-    except Exception as e:
-        print(f"\n❌ Error creating sample data: {str(e)}")
-        print("Make sure the database is initialized and configured correctly.")
+    create_sample_data()

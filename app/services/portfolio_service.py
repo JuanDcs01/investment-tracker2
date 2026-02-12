@@ -3,6 +3,7 @@ from app.models import Instrument, Wallet
 from app.services.market_service import MarketService
 from app.services.fifo import FIFOService
 import logging
+from decimal import Decimal
 
 logger = logging.getLogger(__name__)
 
@@ -41,11 +42,11 @@ class PortfolioService:
         current_prices = MarketService.get_batch_prices(symbols_data)
         
         # Acumuladores
-        current_investment = 0.0  # Dinero actualmente invertido
-        current_market_value = 0.0
-        total_realized_gain = 0.0
-        total_unrealized_gain = 0.0
-        total_cost_basis_sold = 0.0
+        current_investment = Decimal('0.0')
+        current_market_value = Decimal('0.0')
+        total_realized_gain = Decimal('0.0')
+        total_unrealized_gain = Decimal('0.0')
+        total_cost_basis_sold = Decimal('0.0')
         
         for inst in instruments:
             current_price = current_prices.get(inst.symbol, 0)
@@ -64,17 +65,21 @@ class PortfolioService:
             
             # Acumular valores
             # current_investment = solo el costo de lo que AÚN tienes
-            current_investment += metrics['cost_basis']  # ✅ CAMBIO: solo cost_basis actual
-            current_market_value += metrics['current_value']
-            total_realized_gain += metrics['realized_gain']
-            total_unrealized_gain += metrics['unrealized_gain']
-            total_cost_basis_sold += metrics['cost_basis_sold']
+            current_investment += Decimal(str(metrics['cost_basis']))
+            current_market_value += Decimal(str(metrics['current_value']))
+            total_realized_gain += Decimal(str(metrics['realized_gain']))
+            total_unrealized_gain += Decimal(str(metrics['unrealized_gain']))
+            total_cost_basis_sold += Decimal(str(metrics['cost_basis_sold']))
 
-        
         wallet = Wallet.query.first()
 
-        total_realized_gain -= float(wallet.commissions)
-        total_realized_gain += float(wallet.dividend)
+        try:
+            total_realized_gain -= Decimal(wallet.commissions)
+            total_realized_gain += Decimal(wallet.dividend)
+        except Exception as e:
+            logger.error(f"Error registering transaction: {e}")
+            total_realized_gain = 0
+
         
         # Calcular porcentajes globales
         total_gain = total_realized_gain + total_unrealized_gain
@@ -199,7 +204,7 @@ class PortfolioService:
         type_distribution = {'stock': 0, 'etf': 0, 'crypto': 0}
         risk_distribution = {'medium': 0, 'high': 0}
         instrument_values = []
-        total_value = 0.0
+        total_value = Decimal(str('0.0'))
         
         for inst in instruments:
             current_price = current_prices.get(inst.symbol, 0)
@@ -209,7 +214,7 @@ class PortfolioService:
                 continue
             
             unrealized = FIFOService.calculate_unrealized_gain(transactions, current_price)
-            current_value = unrealized['current_value']
+            current_value = Decimal(unrealized['current_value'])
             total_value += current_value
             
             # By type

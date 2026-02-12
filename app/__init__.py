@@ -52,7 +52,7 @@ def register_error_handlers(app):
     def internal_error(error):
         from flask import render_template
         db.session.rollback()
-        return render_template('errors/500.html'), 500
+        return render_template('500.html'), 500
 
 
 def register_template_filters(app):

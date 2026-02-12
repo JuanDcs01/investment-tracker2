@@ -1,4 +1,5 @@
 from app import db
+from decimal import Decimal
 
 class Wallet(db.Model):
     __tablename__ = 'wallet'
@@ -20,7 +21,7 @@ class Wallet(db.Model):
         return {
             'id': self.id,
             'name': self.name,
-            'quantity': float(self.quantity),
-            'commissions': float(self.commissions),
-            'dividend': float(self.dividend),
+            'quantity': Decimal(self.quantity),
+            'commissions': Decimal(self.commissions),
+            'dividend': Decimal(self.dividend),
         }

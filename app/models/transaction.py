@@ -1,5 +1,6 @@
 from app import db
 from datetime import datetime
+from decimal import Decimal
 
 
 class Transaction(db.Model):
@@ -37,17 +38,17 @@ class Transaction(db.Model):
             'id': self.id,
             'instrument_id': self.instrument_id,
             'transaction_type': self.transaction_type,
-            'quantity': float(self.quantity),
-            'price': float(self.price),
-            'commission': float(self.commission),
-            'base_amount': float(self.base_amount),
+            'quantity': Decimal(self.quantity),
+            'price': Decimal(self.price),
+            'commission': Decimal(self.commission),
+            'base_amount': Decimal(self.base_amount),
             'transaction_date': self.transaction_date.isoformat() if self.transaction_date else None,
             'created_at': self.created_at.isoformat() if self.created_at else None
         }
     
     def calculate_base_amount(self):
         """invertido sin comisiones"""
-        base_amount = float(self.quantity) * float(self.price)
+        base_amount = Decimal(self.quantity) * Decimal(self.price)
         self.base_amount = base_amount
 
         return self.base_amount
@@ -55,9 +56,9 @@ class Transaction(db.Model):
     @property
     def total_paid(self):
         """Calculate total paid for the transaction."""
-        base_amount = float(self.quantity) * float(self.price)
+        base_amount = Decimal(self.quantity) * Decimal(self.price)
         
         if self.transaction_type == 'buy':
-            return base_amount + float(self.commission)
+            return base_amount + Decimal(self.commission)
         else:  # sell
-            return base_amount - float(self.commission)
+            return base_amount - Decimal(self.commission)

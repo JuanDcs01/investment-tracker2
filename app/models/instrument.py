@@ -1,6 +1,7 @@
 from app import db
 from datetime import datetime
 from sqlalchemy import Index
+from decimal import Decimal
 
 
 class Instrument(db.Model):
@@ -45,9 +46,9 @@ class Instrument(db.Model):
             'id': self.id,
             'symbol': self.symbol,
             'instrument_type': self.instrument_type,
-            'quantity': float(self.quantity),
-            'cost_base': float(self.cost_base),
-            'commission': float(self.commission),
+            'quantity': Decimal(self.quantity),
+            'cost_base': Decimal(self.cost_base),
+            'commission': Decimal(self.commission),
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None
         }
