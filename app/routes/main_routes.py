@@ -214,7 +214,10 @@ def register_transaction(instrument_id):
             transaction_date=transaction_date
         )
 
-        wallet.quantity -= Decimal(transaction.total_paid)
+        if transaction.transaction_type == 'buy':
+            wallet.quantity -= Decimal(transaction.total_paid)
+        else:
+            wallet.quantity += Decimal(transaction.total_paid)
 
         # Calculate total
         transaction.calculate_base_amount()

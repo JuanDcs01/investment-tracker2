@@ -197,6 +197,13 @@ endblock %} {% block content %}
               </td>
 
               <td class="text-center">
+                <!-- <a
+                  class="btn btn-sm btn-outline-secondary"
+                  href="https://www.google.com"
+                  title="Eliminar"
+                >
+                  <i class="bi bi-graph-up"></i>
+                </a> -->
                 <a
                   href="{{ url_for('main.register_transaction', instrument_id=inst.instrument_id) }}"
                   class="btn btn-sm btn-outline-primary"
