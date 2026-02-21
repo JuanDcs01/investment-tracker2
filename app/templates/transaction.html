@@ -176,7 +176,7 @@ instrument.symbol }}{% endblock %} {% block content %}
               <tbody>
                 {% for trans in transactions %}
                 <tr>
-                  <td>{{ trans.transaction_date.strftime('%Y-%m-%d') }}</td>
+                  <td>{{ trans.transaction_date.strftime('%d/%m/%y') }}</td>
                   <td>
                     <span
                       class="badge {% if trans.transaction_type == 'buy' %}bg-success{% else %}bg-danger{% endif %}"

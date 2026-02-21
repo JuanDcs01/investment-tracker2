@@ -58,7 +58,3 @@ migrations/versions/*.pyc
 .pytest_cache/
 .coverage
 htmlcov/
-
-# Documentation
-docs/_build/
-sdad.py
