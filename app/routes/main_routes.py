@@ -287,7 +287,7 @@ def register_transaction(instrument_id):
         db.session.commit()
         
         flash(
-            f'Transacción de {transaction_type.upper()} registrada exitosamente',
+            f'Transacción de {'compra' if transaction_type.upper() == 'BUY' else 'venta'} registrada exitosamente',
             'success'
         )
         return redirect(url_for('main.register_transaction', instrument_id=instrument_id))
