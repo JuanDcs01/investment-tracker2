@@ -46,13 +46,6 @@ class Transaction(db.Model):
             'created_at': self.created_at.isoformat() if self.created_at else None
         }
     
-    def calculate_base_amount(self):
-        """invertido sin comisiones"""
-        base_amount = Decimal(self.quantity) * Decimal(self.price)
-        self.base_amount = base_amount
-
-        return self.base_amount
-    
     @property
     def total_paid(self):
         """Calculate total paid for the transaction."""
