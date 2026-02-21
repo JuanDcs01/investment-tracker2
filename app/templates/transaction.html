@@ -135,37 +135,6 @@ instrument.symbol }}{% endblock %} {% block content %}
           </form>
         </div>
       </div>
-
-      <!-- Current Position Summary -->
-      <div class="card mt-4">
-        <div class="card-header bg-light">
-          <h6 class="mb-0">Posición Actual</h6>
-        </div>
-        <div class="card-body">
-          <table class="table table-sm mb-0">
-            <tr>
-              <td><strong>Cantidad:</strong></td>
-              <td class="text-end">
-                {{ metrics.current_quantity|format_smart_decimal }}
-              </td>
-            </tr>
-            <tr>
-              <td><strong>Precio Promedio:</strong></td>
-              <td class="text-end">
-                {#{ instrument.average_purchase_price|currency }#}
-              </td>
-            </tr>
-            <tr>
-              <td><strong>Costo Total:</strong></td>
-              <td class="text-end">{#{ instrument.cost_base|currency }#}</td>
-            </tr>
-            <tr>
-              <td><strong>Comisiones Totales:</strong></td>
-              <td class="text-end">{#{ instrument.commission|currency }#}</td>
-            </tr>
-          </table>
-        </div>
-      </div>
     </div>
 
     <!-- Transaction History -->
