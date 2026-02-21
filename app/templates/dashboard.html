@@ -1,9 +1,14 @@
 {% extends "base.html" %} {% block title %}Dashboard - Investment Tracker{%
 endblock %} {% block content %}
 <div class="container-fluid">
-  <h2 class="mb-4">
-    <i class="bi bi-speedometer2"></i> Rendimiento de Inversiones
-  </h2>
+  <div
+    class="card-header d-flex justify-content-between align-items-center flex-wrap gap-3"
+  >
+    <h2 class="mb-4">
+      <i class="bi bi-speedometer2"></i> Rendimiento de Inversiones
+    </h2>
+    <h3 class="border border-2 p-2">1 USD = {{usd_to_dop}} DOP</h3>
+  </div>
 
   <div class="row g-3 mb-4">
     <div class="col-xl">
@@ -26,9 +31,14 @@ endblock %} {% block content %}
           <h6 class="card-subtitle mb-2 text-muted">
             <i class="bi bi-bank"></i> Valor Actual de Mercado
           </h6>
-          <h3 class="card-title mb-0">
-            {{ portfolio.current_market_value|currency }}
-          </h3>
+          <div class="d-flex align-items-baseline gap-2">
+            <h3 class="card-title mb-0">
+              {{ portfolio.current_market_value|currency }}
+            </h3>
+            <small class="fs-6"
+              >RD{{ portfolio.current_market_value_dop|currency }}</small
+            >
+          </div>
           <small class="text-muted">Valor de tus posiciones</small>
         </div>
       </div>
@@ -139,6 +149,7 @@ endblock %} {% block content %}
               <th>Tipo</th>
               <th class="text-end">Cantidad</th>
               <th class="text-end">Precio Actual</th>
+              <th class="text-end">Ultima apertura</th>
               <th class="text-end">Inversión Actual</th>
               <th class="text-end">Valor Mercado</th>
               <th class="text-end">G. No Realizada</th>
@@ -160,6 +171,15 @@ endblock %} {% block content %}
               </td>
               <td class="text-end">{{ inst.current_quantity|number(4) }}</td>
               <td class="text-end">{{ inst.current_price|currency }}</td>
+
+              <!-- Ultima apertura -->
+              <td
+                class="text-end {% if inst.change >= 0 %}text-success{% else %}text-danger{% endif %}"
+              >
+                {{ inst.change|currency }}
+                <br />
+                <small>({{ inst.change_percentage|percentage }})</small>
+              </td>
 
               <!-- Inversión Actual -->
               <td class="text-end">{{ inst.current_investment|currency }}</td>
@@ -248,7 +268,10 @@ endblock %} {% block content %}
         <div class="card-header bg-light">
           <h6 class="mb-0">Distribución por Tipo</h6>
         </div>
-        <div class="card-body d-flex justify-content-center">
+        <div
+          class="card-body d-flex justify-content-center"
+          style="position: relative; height: 350px"
+        >
           <canvas id="typeChart"></canvas>
         </div>
       </div>
@@ -260,7 +283,10 @@ endblock %} {% block content %}
         <div class="card-header bg-light">
           <h6 class="mb-0">Distribución por Riesgo</h6>
         </div>
-        <div class="card-body d-flex justify-content-center">
+        <div
+          class="card-body d-flex justify-content-center"
+          style="position: relative; height: 350px"
+        >
           <canvas id="riskChart"></canvas>
         </div>
       </div>
@@ -272,7 +298,10 @@ endblock %} {% block content %}
         <div class="card-header bg-light">
           <h6 class="mb-0">Distribución por Instrumento</h6>
         </div>
-        <div class="card-body d-flex justify-content-center">
+        <div
+          class="card-body d-flex justify-content-center"
+          style="position: relative; height: 350px"
+        >
           <canvas id="instrumentChart"></canvas>
         </div>
       </div>
@@ -523,12 +552,12 @@ endblock %} {% block content %}
 
       // Charts
       {% if instruments %}
-      const distribution = {{ distribution|tojson }};
+      const distribution = {{ distribution|tojson | safe}};
 
       // Helper function to create doughnut chart
     function createDoughnutChart(canvasId, data, title) {
         const ctx = document.getElementById(canvasId).getContext('2d');
-        const total = data.reduce((acc, d) => acc + d.value, 0);
+        const total = data.reduce((sum, item) => sum + Number(item.value || 0), 0);
 
         new Chart(ctx, {
             type: 'doughnut',
@@ -557,6 +586,7 @@ endblock %} {% block content %}
                                 const label = context.label || '';
                                 const value = context.parsed;
                                 const percentage = ((value / total) * 100).toFixed(2);
+                                console.log('Tooltip data:', { value, total });
                                 return `${label}: $${value.toLocaleString()} (${percentage}%)`;
                             }
                         }

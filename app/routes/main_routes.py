@@ -31,13 +31,16 @@ def index():
         
         # Get portfolio distribution for charts
         distribution = PortfolioService.get_portfolio_distribution(instruments)
+
+        usd_to_dop = MarketService.get_usd_to_dop_rate()
         
         return render_template(
             'dashboard.html',
             portfolio=portfolio_metrics,
             instruments=instrument_data,
             distribution=distribution,
-            wallet=wallet
+            wallet=wallet,
+            usd_to_dop=usd_to_dop
         )
         
     except Exception as e:

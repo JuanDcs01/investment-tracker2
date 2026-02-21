@@ -1,6 +1,7 @@
 import yfinance as yf
 from datetime import datetime, timedelta
 from typing import Optional, Dict, List
+from decimal import Decimal
 import logging
 
 logger = logging.getLogger(__name__)
@@ -208,6 +209,118 @@ class MarketService:
                 symbol = f"{symbol}-USD"
         
         return symbol
+
+    @classmethod
+    def get_intraday_change(cls, symbol: str, instrument_type: str) -> Optional[Dict]:
+        """
+        Get change since previous close (intraday change).
+        ✅ CORREGIDO - Ahora calcula correctamente vs cierre anterior
+        
+        Para stocks/ETFs: Cambio desde cierre de ayer
+        Para crypto: Cambio desde cierre del período anterior (crypto opera 24/7)
+        
+        Returns:
+            dict: {
+                'current_price': float,
+                'previous_close': float,
+                'change': float,
+                'change_percent': float
+            }
+        """
+        try:
+            formatted_symbol = cls._format_symbol(symbol, instrument_type)
+            ticker = yf.Ticker(formatted_symbol)
+
+            # Estrategia 1: Intentar obtener de ticker.info (más confiable)
+            if hasattr(ticker, 'info') and ticker.info:
+                info = ticker.info
+                
+                # Obtener precio actual
+                current_price = (
+                    info.get('currentPrice') or 
+                    info.get('regularMarketPrice') or
+                    info.get('price')
+                )
+                
+                # Obtener cierre anterior
+                previous_close = (
+                    info.get('previousClose') or
+                    info.get('regularMarketPreviousClose')
+                )
+                
+                if current_price and previous_close:
+                    change = current_price - previous_close
+                    change_percent = (change / previous_close) * 100
+                    
+                    return {
+                        'current_price': float(current_price),
+                        'previous_close': float(previous_close),
+                        'change': round(float(change), 4),
+                        'change_percent': round(float(change_percent), 4)
+                    }
+            
+            # Estrategia 2: Usar histórico diario (fallback)
+            hist = ticker.history(period="5d")
+            
+            if len(hist) < 2:
+                logger.warning(f"Not enough historical data for {symbol}")
+                return None
+            
+            # ✅ CORRECTO: Comparar con cierre anterior
+            previous_close = float(hist["Close"].iloc[-2])  # Cierre de ayer
+            current_price = float(hist["Close"].iloc[-1])   # Precio actual/último
+            
+            change = current_price - previous_close
+            change_percent = (change / previous_close) * 100
+
+            return {
+                'current_price': round(current_price, 2),
+                'previous_close': round(previous_close, 2),
+                'change': round(change, 4),
+                'change_percent': round(change_percent, 4)
+            }
+
+        except Exception as e:
+            logger.error(f"Error fetching intraday change for {symbol}: {str(e)}")
+            return None
+        
+    @classmethod
+    def get_usd_to_dop_rate(cls) -> Optional[Decimal]:
+        try:
+            symbol = "DOP=X"
+
+            # Cache
+            if cls._is_cached(symbol):
+                return cls._cache[symbol]['data']['rate']
+
+            ticker = yf.Ticker(symbol)
+
+            rate = None
+
+            # 1️⃣ Intentar con fast_info
+            fast = ticker.fast_info
+            if fast and fast.get("last_price"):
+                rate = Decimal(str(fast["last_price"]))
+
+            # 2️⃣ Fallback a history si fast_info falla
+            if rate is None:
+                hist = ticker.history(period="1d")
+                if not hist.empty:
+                    rate = Decimal(str(hist["Close"].iloc[-1]))
+
+            if rate is None:
+                logger.warning("Could not fetch USD/DOP rate")
+                return None
+
+            cls._cache_data(symbol, {
+                "rate": rate
+            })
+
+            return rate
+
+        except Exception as e:
+            logger.error(f"Error fetching USD/DOP rate: {str(e)}")
+            return None
     
     @classmethod
     def _is_cached(cls, symbol: str) -> bool:

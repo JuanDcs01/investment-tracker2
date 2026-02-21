@@ -62,6 +62,8 @@ class PortfolioService:
             
             # Calcular métricas con FIFO
             metrics = FIFOService.calculate_instrument_totals(transactions, current_price)
+
+            dop = MarketService.get_usd_to_dop_rate()       
             
             # Acumular valores
             # current_investment = solo el costo de lo que AÚN tienes
@@ -70,6 +72,8 @@ class PortfolioService:
             total_realized_gain += Decimal(str(metrics['realized_gain']))
             total_unrealized_gain += Decimal(str(metrics['unrealized_gain']))
             total_cost_basis_sold += Decimal(str(metrics['cost_basis_sold']))
+
+            current_market_value_dop = current_market_value * dop
 
         wallet = Wallet.query.first()
 
@@ -106,6 +110,7 @@ class PortfolioService:
         return {
             'current_investment': round(current_investment, 2),  # ✅ NUEVO NOMBRE
             'current_market_value': round(current_market_value, 2),
+            'current_market_value_dop': round(current_market_value_dop, 2),
             'unrealized_gain': round(total_unrealized_gain, 2),
             'unrealized_gain_percentage': round(unrealized_gain_percentage, 2),
             'realized_gain': round(total_realized_gain, 2),
@@ -129,7 +134,10 @@ class PortfolioService:
             instrument.symbol,
             instrument.instrument_type
         )
-        
+        change_info = MarketService.get_intraday_change(
+            instrument.symbol,
+            instrument.instrument_type
+        )
         if not current_price:
             current_price = 0.0
         
@@ -172,7 +180,9 @@ class PortfolioService:
             'total_gain': metrics['total_gain'],
             'total_gain_percentage': metrics.get('total_gain_percentage', 0.0),
             'total_commissions': metrics['total_commissions'],
-            'instrument_id': instrument.id
+            'instrument_id': instrument.id,
+            'change': change_info['change'],
+            'change_percentage': change_info['change_percent'] 
         }
     
     @staticmethod
@@ -229,23 +239,24 @@ class PortfolioService:
                 'symbol': inst.symbol,
                 'value': current_value
             })
-        
+
         # Convert to percentages and amounts
         by_type = [
             {
                 'label': key.upper(),
                 'value': value,
-                'percentage': round((value / total_value * 100) if total_value > 0 else 0, 2)
+                'percentage': float(round((value / total_value * 100) if total_value > 0 else 0, 2))
             }
             for key, value in type_distribution.items()
             if value > 0
         ]
+
         
         by_risk = [
             {
                 'label': 'Riesgo Medio (ETF)' if key == 'medium' else 'Riesgo Alto (Stock/Crypto)',
                 'value': value,
-                'percentage': round((value / total_value * 100) if total_value > 0 else 0, 2)
+                'percentage': float(round((value / total_value * 100) if total_value > 0 else 0, 2))
             }
             for key, value in risk_distribution.items()
             if value > 0
@@ -255,7 +266,7 @@ class PortfolioService:
             {
                 'label': item['symbol'],
                 'value': item['value'],
-                'percentage': round((item['value'] / total_value * 100) if total_value > 0 else 0, 2)
+                'percentage': float(round((item['value'] / total_value * 100) if total_value > 0 else 0, 2))
             }
             for item in sorted(instrument_values, key=lambda x: x['value'], reverse=True)
             if item['value'] > 0
