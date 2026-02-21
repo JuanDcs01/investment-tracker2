@@ -99,41 +99,6 @@ class MarketService:
             return None
     
     @classmethod
-    def get_previous_close(cls, symbol: str, instrument_type: str) -> Optional[float]:
-        """
-        Get previous close price for a symbol.
-        
-        Args:
-            symbol: The instrument symbol
-            instrument_type: Type of instrument
-            
-        Returns:
-            float: Previous close price or None if not available
-        """
-        try:
-            formatted_symbol = cls._format_symbol(symbol, instrument_type)
-            
-            ticker = yf.Ticker(formatted_symbol)
-            
-            # Try to get previous close from info
-            if hasattr(ticker, 'info') and ticker.info:
-                prev_close = ticker.info.get('previousClose') or \
-                            ticker.info.get('regularMarketPreviousClose')
-                if prev_close:
-                    return float(prev_close)
-            
-            # Try from history
-            hist = ticker.history(period='5d')
-            if len(hist) >= 2:
-                return float(hist['Close'].iloc[-2])
-            
-            return None
-            
-        except Exception as e:
-            logger.error(f"Error fetching previous close for {symbol}: {str(e)}")
-            return None
-    
-    @classmethod
     def get_instrument_info(cls, symbol: str, instrument_type: str) -> Optional[Dict]:
         """
         Get detailed information about an instrument.

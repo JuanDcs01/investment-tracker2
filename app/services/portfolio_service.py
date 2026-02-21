@@ -26,6 +26,7 @@ class PortfolioService:
             return {
                 'current_investment': 0.0,  # Inversión actual (no total histórico)
                 'current_market_value': 0.0,
+                'current_market_value_dop': 0.0,
                 'unrealized_gain': 0.0,
                 'unrealized_gain_percentage': 0.0,
                 'realized_gain': 0.0,
@@ -47,6 +48,8 @@ class PortfolioService:
         total_realized_gain = Decimal('0.0')
         total_unrealized_gain = Decimal('0.0')
         total_cost_basis_sold = Decimal('0.0')
+
+        dop = MarketService.get_usd_to_dop_rate()
         
         for inst in instruments:
             current_price = current_prices.get(inst.symbol, 0)
@@ -61,9 +64,7 @@ class PortfolioService:
                 continue
             
             # Calcular métricas con FIFO
-            metrics = FIFOService.calculate_instrument_totals(transactions, current_price)
-
-            dop = MarketService.get_usd_to_dop_rate()       
+            metrics = FIFOService.calculate_instrument_totals(transactions, current_price)   
             
             # Acumular valores
             # current_investment = solo el costo de lo que AÚN tienes
@@ -73,7 +74,7 @@ class PortfolioService:
             total_unrealized_gain += Decimal(str(metrics['unrealized_gain']))
             total_cost_basis_sold += Decimal(str(metrics['cost_basis_sold']))
 
-            current_market_value_dop = current_market_value * dop
+        current_market_value_dop = current_market_value * dop
 
         wallet = Wallet.query.first()
 
@@ -84,7 +85,6 @@ class PortfolioService:
             logger.error(f"Error registering transaction: {e}")
             total_realized_gain = 0
 
-        
         # Calcular porcentajes globales
         total_gain = total_realized_gain + total_unrealized_gain
         
@@ -150,7 +150,7 @@ class PortfolioService:
                 'type': instrument.instrument_type,
                 'current_quantity': 0.0,
                 'average_price': 0.0,
-                'current_price': 0.0,
+                'current_price': current_price,
                 'current_value': 0.0,
                 'current_investment': 0.0,  # ✅ Inversión actual por instrumento
                 'unrealized_gain': 0.0,
@@ -159,6 +159,8 @@ class PortfolioService:
                 'realized_gain_percentage': 0.0,
                 'total_gain': 0.0,
                 'total_gain_percentage': 0.0,
+                'change': change_info['change'],
+                'change_percentage': change_info['change_percent'],
                 'instrument_id': instrument.id
             }
         
@@ -180,9 +182,9 @@ class PortfolioService:
             'total_gain': metrics['total_gain'],
             'total_gain_percentage': metrics.get('total_gain_percentage', 0.0),
             'total_commissions': metrics['total_commissions'],
-            'instrument_id': instrument.id,
             'change': change_info['change'],
-            'change_percentage': change_info['change_percent'] 
+            'change_percentage': change_info['change_percent'],
+            'instrument_id': instrument.id
         }
     
     @staticmethod
