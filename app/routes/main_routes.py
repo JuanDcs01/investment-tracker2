@@ -164,6 +164,7 @@ def register_transaction(instrument_id):
         price_str = request.form.get('price', '')
         commission_str = request.form.get('commission', '0')
         date_str = request.form.get('transaction_date', '')
+        edit_transaction_id = request.form.get('edit_transaction_id', '').strip()
         
         # Validate transaction type
         is_valid, error = Validator.validate_transaction_type(transaction_type)
@@ -207,6 +208,36 @@ def register_transaction(instrument_id):
                 )
                 return redirect(url_for('main.register_transaction', instrument_id=instrument_id))
         
+        # Check if editing existing transaction
+        if edit_transaction_id:
+            transaction = Transaction.query.get_or_404(int(edit_transaction_id))
+
+            # Revert wallet effect of old transaction
+            if transaction.transaction_type == 'buy':
+                wallet.quantity += Decimal(transaction.total_paid)
+            else:
+                wallet.quantity -= Decimal(transaction.total_paid)
+
+            # Update fields
+            transaction.transaction_type = transaction_type
+            transaction.quantity = quantity
+            transaction.price = price
+            transaction.commission = commission
+            transaction.transaction_date = transaction_date
+            transaction.calculate_base_amount()
+
+            # Apply wallet effect of updated transaction
+            if transaction.transaction_type == 'buy':
+                wallet.quantity -= Decimal(transaction.total_paid)
+            else:
+                wallet.quantity += Decimal(transaction.total_paid)
+
+            db.session.add(wallet)
+            db.session.commit()
+
+            flash(f'Transacción actualizada exitosamente', 'success')
+            return redirect(url_for('main.register_transaction', instrument_id=instrument_id))
+
         # Create transaction
         transaction = Transaction(
             instrument_id=instrument_id,

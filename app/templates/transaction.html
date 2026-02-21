@@ -18,13 +18,19 @@ instrument.symbol }}{% endblock %} {% block content %}
     <div class="col-md-6">
       <div class="card">
         <div class="card-header bg-primary text-white">
-          <h5 class="mb-0">Nueva Transacción</h5>
+          <h5 class="mb-0">Transacción</h5>
         </div>
         <div class="card-body">
           <form
             method="POST"
             action="{{ url_for('main.register_transaction', instrument_id=instrument.id) }}"
           >
+            <input
+              type="hidden"
+              id="edit_transaction_id"
+              name="edit_transaction_id"
+              value=""
+            />
             <div class="mb-3">
               <label for="transaction_type" class="form-label"
                 >Tipo de Movimiento *</label
@@ -128,8 +134,16 @@ instrument.symbol }}{% endblock %} {% block content %}
             </div>
 
             <div class="d-grid gap-2">
-              <button type="submit" class="btn btn-primary">
+              <button type="submit" class="btn btn-primary" id="submitBtn">
                 <i class="bi bi-check-circle"></i> Registrar Transacción
+              </button>
+              <button
+                type="button"
+                class="btn btn-outline-secondary d-none"
+                id="cancelEditBtn"
+                onclick="cancelEdit()"
+              >
+                <i class="bi bi-x-circle"></i> Cancelar Edición
               </button>
             </div>
           </form>
@@ -156,6 +170,7 @@ instrument.symbol }}{% endblock %} {% block content %}
                   <th class="text-end">Monto base</th>
                   <th class="text-end">Comisión</th>
                   <th class="text-end">Total</th>
+                  <th class="text-center">Acción</th>
                 </tr>
               </thead>
               <tbody>
@@ -177,6 +192,16 @@ instrument.symbol }}{% endblock %} {% block content %}
                   <td class="text-end">{{ trans.commission|currency }}</td>
                   <td class="text-end">
                     <strong>{{ trans.total_paid|currency }}</strong>
+                  </td>
+                  <td class="text-center">
+                    <button
+                      type="button"
+                      class="btn btn-sm btn-outline-primary"
+                      onclick="loadTransaction({{ trans.id }}, '{{ trans.transaction_type }}', '{{ trans.quantity|format_smart_decimal }}', '{{ trans.price|format_smart_decimal }}', '{{ trans.commission }}', '{{ trans.transaction_date.strftime('%Y-%m-%d') }}')"
+                      title="Editar"
+                    >
+                      <i class="bi bi-pencil"></i>
+                    </button>
                   </td>
                 </tr>
                 {% endfor %}
@@ -244,5 +269,31 @@ instrument.symbol }}{% endblock %} {% block content %}
             quantityInput.removeAttribute('max');
         }
     });
+
+    function loadTransaction(id, type, quantity, price, commission, date) {
+        document.getElementById('edit_transaction_id').value = id;
+        document.getElementById('transaction_type').value = type;
+        document.getElementById('quantity').value = quantity;
+        document.getElementById('price').value = price;
+        document.getElementById('commission').value = commission;
+        document.getElementById('transaction_date').value = date;
+        document.getElementById('submitBtn').innerHTML = '<i class="bi bi-pencil-square"></i> Actualizar Transacción';
+        document.getElementById('cancelEditBtn').classList.remove('d-none');
+        calculateTotal();
+        // Scroll al formulario
+        document.querySelector('.card').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function cancelEdit() {
+        document.getElementById('edit_transaction_id').value = '';
+        document.getElementById('transaction_type').value = '';
+        document.getElementById('quantity').value = '';
+        document.getElementById('price').value = '';
+        document.getElementById('commission').value = '0';
+        document.getElementById('transaction_date').value = today;
+        document.getElementById('submitBtn').innerHTML = '<i class="bi bi-check-circle"></i> Registrar Transacción';
+        document.getElementById('cancelEditBtn').classList.add('d-none');
+        calculateTotal();
+    }
 </script>
 {% endblock %}
