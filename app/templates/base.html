@@ -45,6 +45,11 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
           <ul class="navbar-nav ms-auto">
+            <div class="d-flex align-items-center">
+                <div class="bg-white rounded-3 px-3 me-3 fw-bold">
+                    1 USD <i class="bi bi-arrow-right"></i> {{ usd_to_dop }} DOP
+                </div>
+            </div>
             <li class="nav-item">
               <a class="nav-link" href="{{ url_for('main.index') }}">
                 <i class="bi bi-speedometer2"></i> Dashboard
