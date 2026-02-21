@@ -133,6 +133,32 @@ def delete_instrument(instrument_id):
             'message': 'Error al eliminar el instrumento'
         }), 500
 
+@bp.route('/delete-transaction/<int:transaction_id>', methods=['POST'])
+def delete_transaction(transaction_id):
+    """Delete an transaction from the portfolio."""
+    try:
+        transaction = Transaction.query.get_or_404(transaction_id)
+        wallet = Wallet.query.first()
+
+        if transaction.transaction_type == 'buy':
+            wallet.quantity += Decimal(transaction.total_paid)
+        
+        db.session.delete(transaction)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': f'transacción eliminada exitosamente'
+        })
+        
+    except Exception as e:
+        logger.error(f"Error deleting transaction: {str(e)}")
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'message': 'Error al eliminar la transacción'
+        }), 500
+
 
 @bp.route('/transaction/<int:instrument_id>', methods=['GET', 'POST'])
 def register_transaction(instrument_id):

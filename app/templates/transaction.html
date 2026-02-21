@@ -202,6 +202,13 @@ instrument.symbol }}{% endblock %} {% block content %}
                     >
                       <i class="bi bi-pencil"></i>
                     </button>
+                    <button
+                      class="btn btn-sm btn-outline-danger"
+                      onclick="deleteTransaction({{ trans.id }})"
+                      title="Eliminar"
+                    >
+                      <i class="bi bi-trash"></i>
+                    </button>
                   </td>
                 </tr>
                 {% endfor %}
@@ -295,5 +302,28 @@ instrument.symbol }}{% endblock %} {% block content %}
         document.getElementById('cancelEditBtn').classList.add('d-none');
         calculateTotal();
     }
+        // Delete Instrument Function
+      async function deleteTransaction(transactionId) {
+          if (!confirm(`¿Está seguro de eliminar la transacción? Esta acción no se puede deshacer.`)) {
+              return;
+          }
+
+          try {
+              const response = await fetch(`/delete-transaction/${transactionId}`, {
+                  method: 'POST'
+              });
+
+              const data = await response.json();
+
+              if (data.success) {
+                  alert(data.message);
+                  location.reload();
+              } else {
+                  alert(data.message);
+              }
+          } catch (error) {
+              alert('Error al eliminar la transacción');
+          }
+      }
 </script>
 {% endblock %}
