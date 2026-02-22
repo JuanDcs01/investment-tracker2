@@ -142,7 +142,7 @@ def delete_transaction(transaction_id):
 
         if transaction.transaction_type == 'buy':
             wallet.quantity += Decimal(transaction.total_paid)
-        
+            
         db.session.delete(transaction)
         db.session.commit()
         
@@ -227,9 +227,8 @@ def register_transaction(instrument_id):
             metrics = PortfolioService.calculate_instrument_metrics(instrument)
             current_quantity = Decimal(str(metrics['current_quantity']))
             
-            if quantity > current_quantity:
-                flash(
-                    f'No puede vender {quantity} unidades. Solo posee {current_quantity}',
+            if not edit_transaction_id and quantity > current_quantity:
+                flash(f'No puede vender {quantity} unidades. Solo posee {current_quantity}',
                     'danger'
                 )
                 return redirect(url_for('main.register_transaction', instrument_id=instrument_id))
@@ -244,6 +243,21 @@ def register_transaction(instrument_id):
             else:
                 wallet.quantity -= Decimal(transaction.total_paid)
 
+            # Check if selling more than owned (using FIFO calculation)
+            if transaction_type == 'sell':
+                metrics = PortfolioService.calculate_instrument_metrics(instrument)
+                current_quantity = Decimal(str(metrics['current_quantity']))
+                try:
+                    current_quantity += transaction.quantity
+                except Exception as e:
+                    logger.error(f"Ha ocurrido un error: {e} tipos: {type(current_quantity)} y {type(transaction.quantity)}")
+
+                if quantity > current_quantity:
+                    flash(f'No puede vender {quantity} unidades. Solo posee {f"{current_quantity:.2f}".rstrip('0').rstrip('.')}',
+                        'danger'
+                    )
+                    return redirect(url_for('main.register_transaction', instrument_id=instrument_id))
+                
             # Update fields
             transaction.transaction_type = transaction_type
             transaction.quantity = quantity
@@ -333,7 +347,7 @@ def update_wallet():
         wallet.commissions += new_commisions
         wallet.dividend += new_dividend
 
-        if wallet.commissions < 0 or wallet.dividend < 0:
+        if wallet.commissions < 0 or wallet.dividend < 0 or wallet.quantity:
             return jsonify({'success': False, 'message': 'Cantida resultante negativa'})
 
         db.session.commit()
