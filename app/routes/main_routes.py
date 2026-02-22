@@ -142,8 +142,8 @@ def delete_transaction(transaction_id):
 
         if transaction.transaction_type == 'buy':
             wallet.quantity += Decimal(transaction.total_paid)
-        # else:
-        #     wallet.quantity -= Decimal(transaction.total_paid)
+        else:
+            wallet.quantity -= Decimal(transaction.total_paid)
 
         db.session.delete(transaction)
         db.session.commit()
