@@ -142,7 +142,9 @@ def delete_transaction(transaction_id):
 
         if transaction.transaction_type == 'buy':
             wallet.quantity += Decimal(transaction.total_paid)
-            
+        # else:
+        #     wallet.quantity -= Decimal(transaction.total_paid)
+
         db.session.delete(transaction)
         db.session.commit()
         
@@ -247,17 +249,17 @@ def register_transaction(instrument_id):
             if transaction_type == 'sell':
                 metrics = PortfolioService.calculate_instrument_metrics(instrument)
                 current_quantity = Decimal(str(metrics['current_quantity']))
-                try:
-                    current_quantity += transaction.quantity
-                except Exception as e:
-                    logger.error(f"Ha ocurrido un error: {e} tipos: {type(current_quantity)} y {type(transaction.quantity)}")
+                current_quantity += transaction.quantity
 
                 if quantity > current_quantity:
                     flash(f'No puede vender {quantity} unidades. Solo posee {f"{current_quantity:.2f}".rstrip('0').rstrip('.')}',
                         'danger'
                     )
-                    return redirect(url_for('main.register_transaction', instrument_id=instrument_id))
-                
+                       
+            if transaction_type == 'buy' and wallet.quantity < Decimal(price_str) + Decimal(commission_str):
+                flash(f'Poder de compra insuficente. Solo posee {f"{wallet.quantity:.2f}".rstrip('0').rstrip('.')}', 'danger')
+                return redirect(url_for('main.register_transaction', instrument_id=instrument_id))
+            
             # Update fields
             transaction.transaction_type = transaction_type
             transaction.quantity = quantity
@@ -347,7 +349,7 @@ def update_wallet():
         wallet.commissions += new_commisions
         wallet.dividend += new_dividend
 
-        if wallet.commissions < 0 or wallet.dividend < 0 or wallet.quantity:
+        if wallet.commissions < 0 or wallet.dividend < 0 or wallet.quantity < 0:
             return jsonify({'success': False, 'message': 'Cantida resultante negativa'})
 
         db.session.commit()
