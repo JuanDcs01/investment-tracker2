@@ -40,7 +40,7 @@ def index():
             instruments=instrument_data,
             distribution=distribution,
             wallet=wallet,
-            usd_to_dop=usd_to_dop
+            usd_to_dop=f'{usd_to_dop:.2f}'
         )
         
     except Exception as e:
