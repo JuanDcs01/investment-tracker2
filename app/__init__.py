@@ -3,6 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from config import config
 import logging
+from flask_wtf.csrf import CSRFProtect
 
 # Configura el registro en un archivo llamado 'errores.log'
 logging.basicConfig(
@@ -14,7 +15,7 @@ logging.basicConfig(
 # Initialize extensions
 db = SQLAlchemy()
 migrate = Migrate()
-
+csrf = CSRFProtect()
 
 def create_app(config_name='default'):
     """Application factory pattern."""
@@ -22,6 +23,9 @@ def create_app(config_name='default'):
     
     # Load configuration
     app.config.from_object(config[config_name])
+
+    # csrf
+    csrf.init_app(app)
     
     # Initialize extensions with app
     db.init_app(app)

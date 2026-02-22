@@ -25,6 +25,7 @@ instrument.symbol }}{% endblock %} {% block content %}
             method="POST"
             action="{{ url_for('main.register_transaction', instrument_id=instrument.id) }}"
           >
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
             <input
               type="hidden"
               id="edit_transaction_id"
@@ -310,7 +311,10 @@ instrument.symbol }}{% endblock %} {% block content %}
 
           try {
               const response = await fetch(`/delete-transaction/${transactionId}`, {
-                  method: 'POST'
+                  method: 'POST',
+                  headers: {
+                'X-CSRFToken': '{{ csrf_token() }}'
+            }
               });
 
               const data = await response.json();

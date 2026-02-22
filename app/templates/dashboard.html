@@ -453,7 +453,10 @@ endblock %} {% block content %}
           try {
               const response = await fetch('{{ url_for("main.add_instrument") }}', {
                   method: 'POST',
-                  body: formData
+                  body: formData,
+                  headers: {
+                'X-CSRFToken': '{{ csrf_token() }}'  // <-- Agrega esto
+            }
               });
 
               const data = await response.json();
@@ -483,7 +486,10 @@ endblock %} {% block content %}
           // Asegúrate de que la ruta coincida con bp.route('/update-wallet')
           const response = await fetch('{{ url_for("main.update_wallet") }}', {
               method: 'POST',
-              body: formData
+              body: formData,
+              headers: {
+                'X-CSRFToken': '{{ csrf_token() }}'
+            }
           });
 
           const data = await response.json();
@@ -510,7 +516,10 @@ endblock %} {% block content %}
 
           try {
               const response = await fetch(`/delete-instrument/${instrumentId}`, {
-                  method: 'POST'
+                  method: 'POST',
+                  headers: {
+                'X-CSRFToken': '{{ csrf_token() }}'
+            }
               });
 
               const data = await response.json();
@@ -530,7 +539,10 @@ endblock %} {% block content %}
       async function refreshPrices() {
           try {
               const response = await fetch('/api/refresh-prices', {
-                  method: 'POST'
+                  method: 'POST',
+                  headers: {
+                'X-CSRFToken': '{{ csrf_token() }}'
+            }
               });
 
               const data = await response.json();
