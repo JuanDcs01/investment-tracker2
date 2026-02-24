@@ -262,7 +262,7 @@ def register_transaction(instrument_id):
                     )
                        
             if transaction_type == 'buy' and wallet.quantity < Decimal(price_str) + Decimal(commission_str):
-                flash(f'Poder de compra insuficente. Solo posee {f"{wallet.quantity:.2f}".rstrip('0').rstrip('.')}', 'danger')
+                flash(f'Poder de compra insuficente. Solo posee {f"{wallet.quantity:.2f} (Transaccion sin editar + billetera)".rstrip('0').rstrip('.')}', 'danger')
                 return redirect(url_for('main.register_transaction', instrument_id=instrument_id))
             
             # Update fields
@@ -296,6 +296,9 @@ def register_transaction(instrument_id):
         )
 
         if transaction.transaction_type == 'buy':
+            if wallet.quantity - Decimal(transaction.total_paid) < 0:
+                flash(f'Poder de compra insuficente. Solo posee {f"{wallet.quantity:.2f}".rstrip('0').rstrip('.')}', 'danger')
+                return redirect(url_for('main.register_transaction', instrument_id=instrument_id))
             wallet.quantity -= Decimal(transaction.total_paid)
         else:
             wallet.quantity += Decimal(transaction.total_paid)
