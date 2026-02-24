@@ -279,3 +279,8 @@ class PortfolioService:
             'by_risk': by_risk,
             'by_instrument': by_instrument[:10]  # Top 10 instruments
         }
+    
+    @staticmethod
+    def create_wallet_default():
+            wallet = Wallet(name='wallet', quantity=0.0, commissions=0.0, dividend=0.0)
+            return wallet

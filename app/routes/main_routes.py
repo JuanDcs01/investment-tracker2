@@ -19,6 +19,11 @@ def index():
         # Get all instruments
         instruments = Instrument.query.all()
         wallet = Wallet.query.first()
+
+        if not wallet:
+            wallet = PortfolioService.create_wallet_default()
+            db.session.add(wallet)
+            db.session.commit()
         
         # Calculate portfolio metrics
         portfolio_metrics = PortfolioService.calculate_portfolio_metrics(instruments)
