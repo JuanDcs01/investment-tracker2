@@ -3,7 +3,7 @@ Script para limpiar datos
 """
 
 from app import create_app, db
-from app.models import Instrument, Transaction
+from app.models import Instrument, Transaction, Wallet
 
 app = create_app('development')
 
@@ -14,6 +14,7 @@ def clean_data():
         print("Borrando datos antiguos...")
         Transaction.query.delete()
         Instrument.query.delete()
+        Wallet.query.delete()
         db.session.commit()
 
 if __name__ == '__main__':

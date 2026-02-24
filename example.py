@@ -5,7 +5,7 @@ Se eliminan los argumentos que causaban el TypeError.
 
 from datetime import datetime
 from app import create_app, db
-from app.models import Instrument, Transaction
+from app.models import Instrument, Transaction, Wallet
 from decimal import Decimal
 
 app = create_app('development')
@@ -18,6 +18,26 @@ def create_sample_data():
         print("Borrando datos antiguos...")
         Transaction.query.delete()
         Instrument.query.delete()
+        Wallet.query.delete()
+        db.session.commit()
+
+        wallet_data = [ 
+            {'name': 'Hapi',
+                'quantity': 135.62,
+                'commissions': 35.43,
+                'dividend': 0.27
+            },
+        ]
+
+        for data in wallet_data:
+            wallet = Wallet(
+                name=data['name'],
+                quantity=data['quantity'],
+                commissions=data['commissions'],
+                dividend=data['dividend'],
+            )
+            db.session.add(wallet)
+
         db.session.commit()
         
         # 2. Creación de Instrumentos
@@ -32,6 +52,7 @@ def create_sample_data():
             {'symbol': 'SPY', 'type': 'etf'},
             {'symbol': 'BTC', 'type': 'crypto'},
             {'symbol': 'AAPL', 'type': 'stock'},
+            {'symbol': 'PWR', 'type': 'stock'},
         ]
         
         instruments = {}
@@ -89,6 +110,8 @@ def create_sample_data():
             {'sym': 'SPY', 'type': 'buy', 'qty': '0.14392', 'px': '694.79', 'comm': '0.15', 'dt': '2026-01-27'},
             # BTC [cite: 4]
             {'sym': 'BTC', 'type': 'buy', 'qty': '0.00153515', 'px': '65140.21', 'comm': '1.00', 'dt': '2026-02-05'},
+            # PWR [cite: 4]
+            {'sym': 'PWR', 'type': 'buy', 'qty': '0.136355', 'px': '550.02', 'comm': '0.15', 'dt': '2026-02-24'},
         ]
 
         for t in raw_transactions:
