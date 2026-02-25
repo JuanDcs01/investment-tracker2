@@ -36,5 +36,14 @@ CREATE TABLE IF NOT EXISTS transactions (
     FOREIGN KEY (instrument_id) REFERENCES instruments(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Wallet  table
+CREATE TABLE IF NOT EXISTS wallet (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(45) NOT NULL UNIQUE,
+    quantity DECIMAL(20, 2) NOT NULL,
+    commissions DECIMAL(20, 2) NOT NULL,
+    dividends DECIMAL(20, 2) NOT NULL,
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Display success message
 SELECT 'Database and tables created successfully!' AS Status;
