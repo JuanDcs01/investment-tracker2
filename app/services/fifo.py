@@ -291,7 +291,7 @@ class FIFOService:
                     date_str = tx.transaction_date.strftime('%d/%m/%Y')
                     return False, (
                         f"La venta del {date_str} requiere más unidades "
-                        f"de las disponibles en esa fecha según FIFO. "
+                        f"de las disponibles en esa fecha. "
                         f"Ajusta o elimina primero las transacciones posteriores."
                     )
         return True, None
@@ -336,6 +336,6 @@ class FIFOService:
                     date_str = tx.transaction_date.strftime('%d/%m/%Y')
                     return False, (
                         f"La venta del {date_str} requiere más unidades "
-                        f"de las disponibles en esa fecha según FIFO."
+                        f"de las disponibles en esa fecha."
                     )
         return True, None

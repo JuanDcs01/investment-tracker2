@@ -58,3 +58,5 @@ migrations/versions/*.pyc
 .pytest_cache/
 .coverage
 htmlcov/
+
+OLD/

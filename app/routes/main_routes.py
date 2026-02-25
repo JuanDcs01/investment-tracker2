@@ -78,13 +78,13 @@ def add_instrument():
         if existing:
             return jsonify({
                 'success': False,
-                'message': 'Este instrumento ya existe en el portafolio'
+                'message': 'Este instrumento ya existe en el portafolio.'
             }), 400
 
         if not MarketService.verify_symbol(symbol, instrument_type):
             return jsonify({
                 'success': False,
-                'message': f'El símbolo {symbol} no existe en Yahoo Finance'
+                'message': f'El símbolo {symbol} no existe en Yahoo Finance.'
             }), 400
 
         instrument = Instrument(symbol=symbol, instrument_type=instrument_type, user_id=current_user.id)
@@ -93,14 +93,14 @@ def add_instrument():
 
         return jsonify({
             'success': True,
-            'message': f'Instrumento {symbol} agregado exitosamente',
+            'message': f'Instrumento {symbol} agregado exitosamente.',
             'instrument_id': instrument.id
         })
 
     except Exception as e:
         logger.error(f"Error adding instrument: {str(e)}")
         db.session.rollback()
-        return jsonify({'success': False, 'message': 'Error al agregar el instrumento'}), 500
+        return jsonify({'success': False, 'message': 'Error al agregar el instrumento.'}), 500
 
 
 @bp.route('/delete-instrument/<int:instrument_id>', methods=['POST'])
@@ -115,13 +115,13 @@ def delete_instrument(instrument_id):
 
         return jsonify({
             'success': True,
-            'message': f'Instrumento {instrument.symbol} eliminado exitosamente'
+            'message': f'Instrumento {instrument.symbol} eliminado exitosamente.'
         })
 
     except Exception as e:
         logger.error(f"Error deleting instrument: {str(e)}")
         db.session.rollback()
-        return jsonify({'success': False, 'message': 'Error al eliminar el instrumento'}), 500
+        return jsonify({'success': False, 'message': 'Error al eliminar el instrumento.'}), 500
 
 
 @bp.route('/delete-transaction/<int:transaction_id>', methods=['POST'])
@@ -173,13 +173,11 @@ def delete_transaction(transaction_id):
         db.session.delete(transaction)
         db.session.add(wallet)
         db.session.commit()
-
-        return jsonify({'success': True, 'message': 'Transacción eliminada exitosamente'})
-
+        return jsonify({'success': True, 'message': 'Transacción eliminada exitosamente.'})
     except Exception as e:
         logger.error(f"Error deleting transaction: {str(e)}")
         db.session.rollback()
-        return jsonify({'success': False, 'message': 'Error al eliminar la transacción'}), 500
+        return jsonify({'success': False, 'message': 'Error al eliminar la transacción.'}), 500
 
 
 @bp.route('/transaction/<int:instrument_id>', methods=['GET', 'POST'])
@@ -278,7 +276,7 @@ def register_transaction(instrument_id):
             if transaction_type == 'buy' and wallet_temp < new_total:
                 flash(
                     f'Poder de compra insuficiente. Disponible (billetera + transacción original): '
-                    f'${wallet_temp:.2f}',
+                    f'${wallet_temp:.2f}.',
                     'danger'
                 )
                 return redirect(url_for('main.register_transaction', instrument_id=instrument_id))
@@ -307,7 +305,7 @@ def register_transaction(instrument_id):
             db.session.add(wallet)
             db.session.commit()
 
-            flash('Transacción actualizada exitosamente', 'success')
+            flash('Transacción actualizada exitosamente.', 'success')
             return redirect(url_for('main.register_transaction', instrument_id=instrument_id))
 
         # ── NUEVA transacción ───────────────────────────────────────────────
@@ -342,7 +340,7 @@ def register_transaction(instrument_id):
         if transaction_type == 'buy':
             if wallet.balance - Decimal(str(transaction.total_paid)) < Decimal('0'):
                 flash(
-                    f'Poder de compra insuficiente. Solo posee ${wallet.balance:.2f}',
+                    f'Poder de compra insuficiente. Solo posee ${wallet.balance:.2f}.',
                     'danger'
                 )
                 return redirect(url_for('main.register_transaction', instrument_id=instrument_id))
@@ -355,15 +353,14 @@ def register_transaction(instrument_id):
         db.session.commit()
 
         tipo_texto = 'compra' if transaction_type == 'buy' else 'venta'
-        flash(f'Transacción de {tipo_texto} registrada exitosamente', 'success')
+        flash(f'Transacción de {tipo_texto} registrada exitosamente.', 'success')
         return redirect(url_for('main.register_transaction', instrument_id=instrument_id))
 
     except Exception as e:
         logger.error(f"Error registering transaction: {str(e)}")
         db.session.rollback()
-        flash('Error al registrar la transacción', 'danger')
+        flash('Error al registrar la transacción.', 'danger')
         return redirect(url_for('main.register_transaction', instrument_id=instrument_id))
-
 
 @bp.route('/api/refresh-prices', methods=['POST'])
 @login_required
@@ -371,17 +368,15 @@ def refresh_prices():
     """API endpoint to refresh all market prices."""
     try:
         MarketService.clear_cache()
-        return jsonify({'success': True, 'message': 'Precios actualizados'})
+        return jsonify({'success': True, 'message': 'Precios actualizados.'})
     except Exception as e:
         logger.error(f"Error refreshing prices: {str(e)}")
-        return jsonify({'success': False, 'message': 'Error al actualizar precios'}), 500
-
+        return jsonify({'success': False, 'message': 'Error al actualizar precios.'}), 500
 
 @bp.route('/glosario')
 @login_required
 def glosario_web():
     return render_template('glosario.html')
-
 
 @bp.route('/update-wallet', methods=['POST'])
 @login_required
@@ -395,7 +390,6 @@ def update_wallet():
         new_dividend    = Decimal(request.form.get('dividend'))    if request.form.get('dividend')    else Decimal('0')
 
         print(f'DEBUG: {new_balance=}')
-        
 
         wallet.balance     += new_balance
         wallet.commissions  += new_commissions
@@ -403,10 +397,10 @@ def update_wallet():
 
         if wallet.commissions < 0 or wallet.dividend < 0 or wallet.balance < 0:
             db.session.rollback()
-            return jsonify({'success': False, 'message': 'Cantidad resultante negativa'})
+            return jsonify({'success': False, 'message': 'Cantidad resultante negativa.'})
 
         db.session.commit()
-        return jsonify({'success': True, 'message': 'Billetera actualizada correctamente'})
+        return jsonify({'success': True, 'message': 'Billetera actualizada correctamente.'})
 
     except Exception as e:
         db.session.rollback()
