@@ -24,17 +24,43 @@
       href="{{ url_for('static', filename='css/style.css') }}"
     />
 
-    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <link
+      rel="shortcut icon"
+      href="{{ url_for('static', filename='favicon.ico') }}"
+    />
 
     {% block extra_css %}{% endblock %}
   </head>
-  <body>
+  <!-- 
+    body usa flexbox en columna para que el footer quede siempre al fondo.
+    min-height: 100dvh cubre el viewport real en móviles (barra de navegador incluida).
+    overflow-x: hidden evita scroll horizontal accidental.
+  -->
+  <body
+    style="
+      display: flex;
+      flex-direction: column;
+      min-height: 100dvh;
+      overflow-x: hidden;
+    "
+  >
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
       <div class="container-fluid">
+        {% if request.endpoint == 'auth.login' %}
+        <a class="navbar-brand" href="{{ url_for('auth.login') }}">
+          <h2 class="text-white mb-0">
+            <i class="bi bi-graph-up-arrow"></i> Trackeo
+          </h2>
+        </a>
+        {% else %}
         <a class="navbar-brand" href="{{ url_for('main.index') }}">
-          <h1><i class="bi bi-graph-up-arrow"></i> Trackeo 
-        </a></h1>
+          <h2 class="text-white mb-0">
+            <i class="bi bi-graph-up-arrow"></i> Trackeo
+          </h2>
+        </a>
+        {% endif %}
+
         <button
           class="navbar-toggler"
           type="button"
@@ -43,28 +69,91 @@
         >
           <span class="navbar-toggler-icon"></span>
         </button>
+
+        {% if current_user.is_authenticated %}
         <div class="collapse navbar-collapse" id="navbarNav">
-          <ul class="navbar-nav ms-auto">
+          <ul class="navbar-nav ms-auto align-items-end align-items-lg-center">
             {% if request.endpoint == 'main.index' %}
-            <div class="d-flex align-items-center">
-                <div class="bg-white rounded-3 px-3 me-3 fw-bold">
-                    1 USD <i class="bi bi-arrow-right"></i> {{ usd_to_dop }} DOP
-                </div>
-            </div>
+            <li class="nav-item mb-2 mb-lg-0">
+              <div
+                class="bg-white rounded-3 px-3 me-lg-3 fw-bold text-dark d-flex align-items-center"
+                style="height: 35px"
+              >
+                1 USD <i class="bi bi-arrow-right mx-2"></i> {{ usd_to_dop }}
+                DOP
+              </div>
+            </li>
             {% endif %}
+
             <li class="nav-item">
-              <a class="nav-link" href="{{ url_for('main.index') }}">
+              <a
+                class="nav-link d-flex align-items-center gap-2"
+                href="{{ url_for('main.index') }}"
+              >
                 <i class="bi bi-speedometer2"></i> Dashboard
               </a>
             </li>
+
             <li class="nav-item">
-              <a class="nav-link" href="{{ url_for('main.glosario_web') }}">
-                <i class="bi bi-journal-bookmark"></i> Glosario</h2>
+              <a
+                class="nav-link d-flex align-items-center gap-2"
+                href="{{ url_for('main.glosario_web') }}"
+              >
+                <i class="bi bi-journal-bookmark"></i> Glosario
               </a>
             </li>
-            <li class="nav-item"></li>
+
+            <li class="nav-item dropdown ms-lg-2">
+              <a
+                class="nav-link dropdown-toggle d-flex align-items-center gap-2"
+                href="#"
+                id="userDropdown"
+                role="button"
+                data-bs-toggle="dropdown"
+                aria-expanded="false"
+              >
+                <span
+                  class="bg-white text-primary rounded-circle d-flex align-items-center justify-content-center fw-bold"
+                  style="
+                    width: 32px;
+                    height: 32px;
+                    font-size: 0.85rem;
+                    flex-shrink: 0;
+                  "
+                >
+                  {{ current_user.username[0]|upper }}
+                </span>
+                <span>{{ current_user.username }}</span>
+              </a>
+              <ul
+                class="dropdown-menu dropdown-menu-end shadow border-0"
+                aria-labelledby="userDropdown"
+                style="min-width: 180px; border-radius: 10px; margin-top: 8px"
+              >
+                <li>
+                  <span
+                    class="dropdown-item-text text-muted small px-3 pt-2 pb-1"
+                  >
+                    Sesión iniciada como<br />
+                    <strong class="text-dark"
+                      >{{ current_user.username }}</strong
+                    >
+                  </span>
+                </li>
+                <li><hr class="dropdown-divider my-1" /></li>
+                <li>
+                  <a
+                    class="dropdown-item text-danger d-flex align-items-center gap-2 py-2"
+                    href="{{ url_for('auth.logout') }}"
+                  >
+                    <i class="bi bi-box-arrow-right"></i> Cerrar Sesión
+                  </a>
+                </li>
+              </ul>
+            </li>
           </ul>
         </div>
+        {% endif %}
       </div>
     </nav>
 
@@ -89,17 +178,31 @@
     {% endif %} {% endwith %}
 
     <!-- Main Content -->
-    <main class="container-fluid py-4">{% block content %}{% endblock %}</main>
+    <!-- flex-grow: 1 hace que el main ocupe todo el espacio sobrante entre navbar y footer -->
+    <main
+      class="container-fluid py-4 {% block main_class %}{% endblock %}"
+      style="flex: 1"
+    >
+      {% block content %}{% endblock %}
+    </main>
 
     <!-- Footer -->
-    <footer class="bg-light py-3 mt-5">
+    <!-- Se quitó mt-5 porque con flexbox el footer ya queda al fondo naturalmente -->
+    <footer class="bg-light py-3" style="border-top: 1px solid #dee2e6">
       <div class="container text-center">
         <p class="text-muted mb-0">
-          &copy; 2026 Investment Trackeo | Datos obtenidos de Yahoo Finance | Desarrollado por Juan David Concepcion S.
+          &copy; 2026 Investment Trackeo | Datos obtenidos de Yahoo Finance |
+          Desarrollado por Juan David Concepcion S.
         </p>
-      <div>
-          <a href="https://github.com/JuanDcs01/investment-tracker2" target="_blank" rel="noopener noreferrer"><i class="bi bi-github "></i> GitHub
+        <div>
+          <a
+            href="https://github.com/JuanDcs01/investment-tracker2"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <i class="bi bi-github"></i> GitHub
           </a>
+        </div>
       </div>
     </footer>
 

@@ -5,25 +5,28 @@ Se eliminan los argumentos que causaban el TypeError.
 
 from datetime import datetime
 from app import create_app, db
-from app.models import Instrument, Transaction, Wallet
+from app.models import Instrument, Transaction, Wallet, User
 from decimal import Decimal
 
 app = create_app('development')
 
 def create_sample_data():
     """Puebla la base de datos con los datos del archivo example.txt."""
+
+    my_user = 1
     
     with app.app_context():
         # 1. Limpieza total
         print("Borrando datos antiguos...")
-        Transaction.query.delete()
-        Instrument.query.delete()
-        Wallet.query.delete()
+        Transaction.query.filter_by(user_id=my_user).delete()
+        Instrument.query.filter_by(user_id=my_user).delete()
+        Wallet.query.filter_by(user_id=my_user).delete()
+        
         db.session.commit()
 
         wallet_data = [ 
-            {'name': 'Hapi',
-                'quantity': 135.62,
+            {'user_id': my_user,
+                'balance': 135.62,
                 'commissions': 35.43,
                 'dividend': 0.27
             },
@@ -31,8 +34,8 @@ def create_sample_data():
 
         for data in wallet_data:
             wallet = Wallet(
-                name=data['name'],
-                quantity=data['quantity'],
+                user_id=data['user_id'],
+                balance=data['balance'],
                 commissions=data['commissions'],
                 dividend=data['dividend'],
             )
@@ -60,7 +63,8 @@ def create_sample_data():
             instrument = Instrument(
                 symbol=data['symbol'],
                 instrument_type=data['type'],
-                commission=0  # Valor inicial por defecto
+                commission=0,  # Valor inicial por defecto
+                user_id=my_user
             )
             db.session.add(instrument)
             instruments[data['symbol']] = instrument
@@ -121,7 +125,8 @@ def create_sample_data():
                 quantity=Decimal(t['qty']),
                 price=Decimal(t['px']),
                 commission=Decimal(t['comm']),
-                transaction_date=datetime.strptime(t['dt'], '%Y-%m-%d').date()
+                transaction_date=datetime.strptime(t['dt'], '%Y-%m-%d').date(),
+                user_id=my_user
             )
             # Poblamos el campo base_amount usando tu método del modelo
             trans.calculate_base_amount()

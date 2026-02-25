@@ -9,6 +9,7 @@ class Transaction(db.Model):
     __tablename__ = 'transactions'
     
     id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False) # Añadido
     instrument_id = db.Column(
         db.Integer,
         db.ForeignKey('instruments.id', ondelete='CASCADE'),
@@ -43,7 +44,8 @@ class Transaction(db.Model):
             'commission': Decimal(self.commission),
             'base_amount': Decimal(self.base_amount),
             'transaction_date': self.transaction_date.isoformat() if self.transaction_date else None,
-            'created_at': self.created_at.isoformat() if self.created_at else None
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'user_id': self.user_id
         }
 
         

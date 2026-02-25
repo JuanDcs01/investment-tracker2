@@ -1,0 +1,78 @@
+{% extends "base.html" %} {% block extra_css %}
+<style>
+  /*
+    Solo en la página de login:
+    El <main> pasa a ser un contenedor flex que centra la card
+    tanto horizontal como verticalmente, sin scroll.
+    El resto de páginas no se ven afectadas porque usan clases distintas.
+  */
+  main.login-main {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+  }
+</style>
+{% endblock %} {% block main_class %}login-main{% endblock %} {% block content
+%}
+<div
+  class="card shadow border-0"
+  style="width: 95%; max-width: 450px; border-radius: 15px"
+>
+  <div class="card-body p-4 p-md-5">
+    <div class="text-center mb-4">
+      <h2 class="fw-bold">Iniciar Sesión</h2>
+      <p class="text-muted small">Ingresa tus credenciales para continuar</p>
+    </div>
+
+    <form method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+      <div class="mb-3">
+        <label for="username" class="form-label small fw-semibold"
+          >Usuario</label
+        >
+        <div class="input-group">
+          <span class="input-group-text bg-light border-end-0">
+            <i class="bi bi-person"></i>
+          </span>
+          <input
+            type="text"
+            id="username"
+            name="username"
+            class="form-control bg-light border-start-0"
+            placeholder="Tu nombre de usuario"
+            required
+          />
+        </div>
+      </div>
+
+      <div class="mb-4">
+        <label for="password" class="form-label small fw-semibold"
+          >Contraseña</label
+        >
+        <div class="input-group">
+          <span class="input-group-text bg-light border-end-0">
+            <i class="bi bi-lock"></i>
+          </span>
+          <input
+            type="password"
+            id="password"
+            name="password"
+            class="form-control bg-light border-start-0"
+            placeholder="••••••••"
+            required
+          />
+        </div>
+      </div>
+
+      <div class="d-grid gap-2">
+        <button type="submit" class="btn btn-primary py-2 fw-bold">
+          Entrar
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -12,7 +12,7 @@ class PortfolioService:
     """Service for portfolio calculations and metrics."""
     
     @staticmethod
-    def calculate_portfolio_metrics(instruments: List[Instrument]) -> Dict:
+    def calculate_portfolio_metrics(instruments: List[Instrument], user: int) -> Dict:
         """
         Calculate overall portfolio metrics.
         
@@ -76,7 +76,7 @@ class PortfolioService:
 
         current_market_value_dop = current_market_value * dop
 
-        wallet = Wallet.query.first()
+        wallet = Wallet.query.filter_by(user_id=user).first()
 
         try:
             total_realized_gain -= Decimal(wallet.commissions)
@@ -281,6 +281,11 @@ class PortfolioService:
         }
     
     @staticmethod
-    def create_wallet_default():
-            wallet = Wallet(name='wallet', quantity=0.0, commissions=0.0, dividend=0.0)
-            return wallet
+    def create_wallet_default(user):
+        try:
+            # Asegúrate de pasar user.id si user es el objeto del usuario
+            new_wallet = Wallet(user_id=user.id, balance=0.0, commissions=0.0, dividend=0.0)
+            return new_wallet
+        except Exception as e:
+            logger.error(f"Error creando wallet: {e}")
+            return None # Retorna None explícitamente si falla

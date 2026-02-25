@@ -10,6 +10,7 @@ class Instrument(db.Model):
     __tablename__ = 'instruments'
     
     id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False) # Añadido
     symbol = db.Column(db.String(20), nullable=False, unique=True, index=True)
     instrument_type = db.Column(
         db.Enum('stock', 'etf', 'crypto', name='instrument_type_enum'),
@@ -50,5 +51,6 @@ class Instrument(db.Model):
             'cost_base': Decimal(self.cost_base),
             'commission': Decimal(self.commission),
             'created_at': self.created_at.isoformat() if self.created_at else None,
-            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+            'user': self.user_id
         }

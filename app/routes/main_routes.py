@@ -6,24 +6,28 @@ from app.utils import Validator
 from datetime import datetime
 from decimal import Decimal
 import logging
+from flask_login import login_required, current_user
 
 logger = logging.getLogger(__name__)
 
 bp = Blueprint('main', __name__)
 
 @bp.route('/')
+@login_required
 def index():
     """Dashboard home page."""
     try:
-        instruments = Instrument.query.all()
-        wallet = Wallet.query.first()
+        instruments = Instrument.query.filter_by(user_id=current_user.id).all()
+        wallet = Wallet.query.filter_by(user_id=current_user.id).first()
+
+        # print(wallet)
 
         if not wallet:
-            wallet = PortfolioService.create_wallet_default()
+            wallet = PortfolioService.create_wallet_default(current_user)
             db.session.add(wallet)
             db.session.commit()
 
-        portfolio_metrics = PortfolioService.calculate_portfolio_metrics(instruments)
+        portfolio_metrics = PortfolioService.calculate_portfolio_metrics(instruments, current_user.id)
 
         instrument_data = []
         for inst in instruments:
@@ -55,6 +59,7 @@ def index():
 
 
 @bp.route('/add-instrument', methods=['POST'])
+@login_required
 def add_instrument():
     """Add a new instrument to the portfolio."""
     try:
@@ -69,7 +74,7 @@ def add_instrument():
         if not is_valid:
             return jsonify({'success': False, 'message': error}), 400
 
-        existing = Instrument.query.filter_by(symbol=symbol).first()
+        existing = Instrument.query.filter_by(symbol=symbol, user_id=current_user.id).first()
         if existing:
             return jsonify({
                 'success': False,
@@ -82,7 +87,7 @@ def add_instrument():
                 'message': f'El símbolo {symbol} no existe en Yahoo Finance'
             }), 400
 
-        instrument = Instrument(symbol=symbol, instrument_type=instrument_type)
+        instrument = Instrument(symbol=symbol, instrument_type=instrument_type, user_id=current_user.id)
         db.session.add(instrument)
         db.session.commit()
 
@@ -99,10 +104,12 @@ def add_instrument():
 
 
 @bp.route('/delete-instrument/<int:instrument_id>', methods=['POST'])
+@login_required
 def delete_instrument(instrument_id):
     """Delete an instrument from the portfolio."""
     try:
-        instrument = Instrument.query.get_or_404(instrument_id)
+        instrument = Instrument.query.filter_by(id=instrument_id,  user_id=current_user.id).first_or_404()
+        
         db.session.delete(instrument)
         db.session.commit()
 
@@ -118,6 +125,7 @@ def delete_instrument(instrument_id):
 
 
 @bp.route('/delete-transaction/<int:transaction_id>', methods=['POST'])
+@login_required
 def delete_transaction(transaction_id):
     """
     Elimina una transacción del portafolio.
@@ -129,8 +137,8 @@ def delete_transaction(transaction_id):
       a la wallet si esa venta ya se había cobrado).
     """
     try:
-        transaction = Transaction.query.get_or_404(transaction_id)
-        wallet = Wallet.query.first()
+        transaction = Transaction.query.filter_by(id=transaction_id, user_id=current_user.id).first_or_404()
+        wallet = Wallet.query.filter_by(user_id=current_user.id).first()
         instrument = transaction.instrument
         all_transactions = instrument.transactions.all()
 
@@ -146,7 +154,7 @@ def delete_transaction(transaction_id):
         # Si eliminamos una venta, la wallet pierde el dinero que esa venta
         # había aportado; verificar que no quede negativa.
         if transaction.transaction_type == 'sell':
-            wallet_after = wallet.quantity - Decimal(str(transaction.total_paid))
+            wallet_after = wallet.balance - Decimal(str(transaction.total_paid))
             if wallet_after < Decimal('0'):
                 return jsonify({
                     'success': False,
@@ -158,9 +166,9 @@ def delete_transaction(transaction_id):
 
         # ── Revertir efecto en wallet ───────────────────────────────────────
         if transaction.transaction_type == 'buy':
-            wallet.quantity += Decimal(str(transaction.total_paid))
+            wallet.balance += Decimal(str(transaction.total_paid))
         else:
-            wallet.quantity -= Decimal(str(transaction.total_paid))
+            wallet.balance -= Decimal(str(transaction.total_paid))
 
         db.session.delete(transaction)
         db.session.add(wallet)
@@ -175,13 +183,14 @@ def delete_transaction(transaction_id):
 
 
 @bp.route('/transaction/<int:instrument_id>', methods=['GET', 'POST'])
+@login_required
 def register_transaction(instrument_id):
     """Register a buy or sell transaction."""
-    instrument = Instrument.query.get_or_404(instrument_id)
-    wallet = Wallet.query.first()
+    instrument = Instrument.query.filter_by(id=instrument_id, user_id=current_user.id).first_or_404()
+    wallet = Wallet.query.filter_by(user_id=current_user.id).first()
 
     if request.method == 'GET':
-        transactions = Transaction.query.filter_by(
+        transactions = Transaction.query.filter_by(user_id=current_user.id).filter_by(
             instrument_id=instrument_id
         ).order_by(Transaction.transaction_date.desc(), Transaction.id.desc())
 
@@ -237,7 +246,7 @@ def register_transaction(instrument_id):
 
         # ── EDICIÓN de transacción existente ────────────────────────────────
         if edit_transaction_id:
-            transaction = Transaction.query.get_or_404(int(edit_transaction_id))
+            transaction = Transaction.query.filter_by(id=int(edit_transaction_id), user_id=current_user.id).first_or_404()
 
             # 1. Validar integridad FIFO con la nueva versión de la transacción
             #    antes de tocar nada en la base de datos.
@@ -257,9 +266,9 @@ def register_transaction(instrument_id):
 
             # 2. Calcular wallet temporal (revirtiendo la transacción vieja)
             if transaction.transaction_type == 'buy':
-                wallet_temp = wallet.quantity + Decimal(str(transaction.total_paid))
+                wallet_temp = wallet.balance + Decimal(str(transaction.total_paid))
             else:
-                wallet_temp = wallet.quantity - Decimal(str(transaction.total_paid))
+                wallet_temp = wallet.balance - Decimal(str(transaction.total_paid))
 
             # 3. Calcular el total de la nueva versión para la validación
             new_total = (quantity * price) + commission if transaction_type == 'buy' \
@@ -277,9 +286,9 @@ def register_transaction(instrument_id):
             # 5. Todo OK → aplicar cambios
             # Revertir efecto viejo en wallet
             if transaction.transaction_type == 'buy':
-                wallet.quantity += Decimal(str(transaction.total_paid))
+                wallet.balance += Decimal(str(transaction.total_paid))
             else:
-                wallet.quantity -= Decimal(str(transaction.total_paid))
+                wallet.balance -= Decimal(str(transaction.total_paid))
 
             # Actualizar transacción
             transaction.transaction_type  = transaction_type
@@ -291,9 +300,9 @@ def register_transaction(instrument_id):
 
             # Aplicar efecto nuevo en wallet
             if transaction.transaction_type == 'buy':
-                wallet.quantity -= Decimal(str(transaction.total_paid))
+                wallet.balance -= Decimal(str(transaction.total_paid))
             else:
-                wallet.quantity += Decimal(str(transaction.total_paid))
+                wallet.balance += Decimal(str(transaction.total_paid))
 
             db.session.add(wallet)
             db.session.commit()
@@ -324,21 +333,22 @@ def register_transaction(instrument_id):
             quantity=quantity,
             price=price,
             commission=commission,
-            transaction_date=transaction_date
+            transaction_date=transaction_date,
+            user_id=current_user.id
         )
         transaction.calculate_base_amount()
 
         # 3. Validar poder de compra
         if transaction_type == 'buy':
-            if wallet.quantity - Decimal(str(transaction.total_paid)) < Decimal('0'):
+            if wallet.balance - Decimal(str(transaction.total_paid)) < Decimal('0'):
                 flash(
-                    f'Poder de compra insuficiente. Solo posee ${wallet.quantity:.2f}',
+                    f'Poder de compra insuficiente. Solo posee ${wallet.balance:.2f}',
                     'danger'
                 )
                 return redirect(url_for('main.register_transaction', instrument_id=instrument_id))
-            wallet.quantity -= Decimal(str(transaction.total_paid))
+            wallet.balance -= Decimal(str(transaction.total_paid))
         else:
-            wallet.quantity += Decimal(str(transaction.total_paid))
+            wallet.balance += Decimal(str(transaction.total_paid))
 
         db.session.add(transaction)
         db.session.add(wallet)
@@ -356,6 +366,7 @@ def register_transaction(instrument_id):
 
 
 @bp.route('/api/refresh-prices', methods=['POST'])
+@login_required
 def refresh_prices():
     """API endpoint to refresh all market prices."""
     try:
@@ -367,25 +378,30 @@ def refresh_prices():
 
 
 @bp.route('/glosario')
+@login_required
 def glosario_web():
     return render_template('glosario.html')
 
 
 @bp.route('/update-wallet', methods=['POST'])
+@login_required
 def update_wallet():
     """Update wallet balances."""
     try:
-        wallet = Wallet.query.first()
+        wallet = Wallet.query.filter_by(user_id=current_user.id).first()
 
-        new_quantity    = Decimal(request.form.get('quantity'))    if request.form.get('quantity')    else Decimal('0')
+        new_balance    = Decimal(request.form.get('balance'))    if request.form.get('balance')    else Decimal('0')
         new_commissions = Decimal(request.form.get('commissions')) if request.form.get('commissions') else Decimal('0')
         new_dividend    = Decimal(request.form.get('dividend'))    if request.form.get('dividend')    else Decimal('0')
 
-        wallet.quantity     += new_quantity
+        print(f'DEBUG: {new_balance=}')
+        
+
+        wallet.balance     += new_balance
         wallet.commissions  += new_commissions
         wallet.dividend     += new_dividend
 
-        if wallet.commissions < 0 or wallet.dividend < 0 or wallet.quantity < 0:
+        if wallet.commissions < 0 or wallet.dividend < 0 or wallet.balance < 0:
             db.session.rollback()
             return jsonify({'success': False, 'message': 'Cantidad resultante negativa'})
 

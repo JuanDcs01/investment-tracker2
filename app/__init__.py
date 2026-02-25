@@ -4,6 +4,7 @@ from flask_migrate import Migrate
 from config import config
 import logging
 from flask_wtf.csrf import CSRFProtect
+from flask_login import LoginManager
 
 # Configura el registro en un archivo llamado 'errores.log'
 logging.basicConfig(
@@ -16,6 +17,10 @@ logging.basicConfig(
 db = SQLAlchemy()
 migrate = Migrate()
 csrf = CSRFProtect()
+login_manager = LoginManager()
+
+login_manager.login_message = "Debe inicia sesión para acceder a la página."
+login_manager.login_message_category = "danger"
 
 def create_app(config_name='default'):
     """Application factory pattern."""
@@ -24,16 +29,31 @@ def create_app(config_name='default'):
     # Load configuration
     app.config.from_object(config[config_name])
 
+    # Initialize extensions with app
+    db.init_app(app)
+
     # csrf
     csrf.init_app(app)
     
-    # Initialize extensions with app
-    db.init_app(app)
+
     migrate.init_app(app, db)
+
+    login_manager.init_app(app)
+    login_manager.login_view = 'auth.login' # Nombre de la ruta de login
+
+    with app.app_context():
+        from app.models.user import User
     
+    @login_manager.user_loader
+    def load_user(user_id):
+        return User.query.get(int(user_id))
+
     # Register blueprints
     from app.routes import main_routes
     app.register_blueprint(main_routes.bp)
+
+    from app.routes.auth import auth_bp
+    app.register_blueprint(auth_bp)
     
     # Register error handlers
     register_error_handlers(app)

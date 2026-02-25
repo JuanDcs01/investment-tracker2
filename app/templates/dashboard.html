@@ -102,7 +102,7 @@ endblock %} {% block content %}
     <div
       class="card-header d-flex justify-content-between align-items-center flex-wrap gap-3"
     >
-      <h6 class="m-1">Poder de compra: {{ wallet.quantity|currency }}</h6>
+      <h6 class="m-1">Poder de compra: {{ wallet.balance|currency }}</h6>
       <div class="d-flex gap-2">
         <button
           class="btn btn-primary text-nowrap"
@@ -385,14 +385,14 @@ endblock %} {% block content %}
         <div class="modal-body">
           <div class="mb-3">
             <label for="quantity" class="form-label"
-              >Poder de compra actual: {{ wallet.quantity|currency }}</label
+              >Poder de compra actual: {{ wallet.balance|currency }}</label
             >
             <input
               type="number"
               step="0.01"
               class="form-control"
-              id="quantity"
-              name="quantity"
+              id="balance"
+              name="balance"
               placeholder="Nuevo saldo total"
             />
           </div>
@@ -623,7 +623,7 @@ endblock %} {% block content %}
       if (distribution.by_instrument) {
           distribution.by_instrument.push({
               label: 'Poder de Compra (Cash)',
-              value: {{ wallet.quantity|float }} // Convertimos el Decimal a float para JS
+              value: {{ wallet.balance|float }} // Convertimos el Decimal a float para JS
           });
       }
 
