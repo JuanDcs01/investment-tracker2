@@ -72,12 +72,14 @@
 
         {% if current_user.is_authenticated %}
         <div class="collapse navbar-collapse" id="navbarNav">
-          <ul class="navbar-nav ms-auto align-items-end align-items-lg-center">
+          <ul
+            class="navbar-nav ms-auto align-items-end align-items-lg-center mt-2 text-white"
+          >
             {% if request.endpoint == 'main.index' %}
             <li class="nav-item mb-2 mb-lg-0">
               <div
                 class="bg-white rounded-3 px-3 me-lg-3 fw-bold text-dark d-flex align-items-center"
-                style="height: 35px"
+                style="height: 30px"
               >
                 1 USD <i class="bi bi-arrow-right mx-2"></i> {{ usd_to_dop }}
                 DOP
@@ -130,17 +132,6 @@
                 aria-labelledby="userDropdown"
                 style="min-width: 180px; border-radius: 10px; margin-top: 8px"
               >
-                <li>
-                  <span
-                    class="dropdown-item-text text-muted small px-3 pt-2 pb-1"
-                  >
-                    Sesión iniciada como<br />
-                    <strong class="text-dark"
-                      >{{ current_user.username }}</strong
-                    >
-                  </span>
-                </li>
-                <li><hr class="dropdown-divider my-1" /></li>
                 <li>
                   <a
                     class="dropdown-item text-danger d-flex align-items-center gap-2 py-2"
