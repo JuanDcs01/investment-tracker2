@@ -20,11 +20,15 @@ class FIFOService:
         Calcula la ganancia realizada usando FIFO, incluyendo comisiones 
         en el costo base para obtener la ganancia neta real.
         """
+        def _to_date(d):
+            from datetime import datetime
+            return d.date() if isinstance(d, datetime) else d
+
         # Separar y ordenar transacciones
         buys = sorted([t for t in transactions if t.transaction_type == 'buy'], 
-                      key=lambda x: x.transaction_date)
+                      key=lambda x: _to_date(x.transaction_date))
         sells = sorted([t for t in transactions if t.transaction_type == 'sell'], 
-                       key=lambda x: x.transaction_date)
+                       key=lambda x: _to_date(x.transaction_date))
         
         if not sells:
             # No hay ventas, retornar ceros
@@ -139,8 +143,12 @@ class FIFOService:
                 'commissions_paid': 0.0  # ✅ CLAVE CORRECTA
             }
         
+        def _to_date(d):
+            from datetime import datetime
+            return d.date() if isinstance(d, datetime) else d
+
         # Calcular costo base de lo que aún se tiene (usando FIFO)
-        buys_sorted = sorted(buys, key=lambda x: x.transaction_date)
+        buys_sorted = sorted(buys, key=lambda x: _to_date(x.transaction_date))
         
         buy_queue = []
         for buy in buys_sorted:
@@ -250,3 +258,84 @@ class FIFOService:
             'total_investment': round(total_investment, 2),
             'total_commissions': round(total_commissions, 2)
         }
+
+    @staticmethod
+    def _validate_fifo_integrity(all_transactions, exclude_id=None):
+        """
+        Simula el orden cronológico de las transacciones y verifica que nunca
+        se vendan más unidades de las disponibles en ese momento.
+
+        Args:
+            all_transactions: iterable de objetos Transaction del instrumento.
+            exclude_id: id de la transacción a ignorar (usada al eliminar/editar).
+
+        Returns:
+            (True, None)              → FIFO válido
+            (False, "mensaje error")  → FIFO roto, con descripción del problema
+        """
+        def _to_date(d):
+            from datetime import datetime
+            return d.date() if isinstance(d, datetime) else d
+
+        txs = [t for t in all_transactions if t.id != exclude_id]
+        txs_sorted = sorted(txs, key=lambda t: (_to_date(t.transaction_date), 0 if t.transaction_type == 'buy' else 1, t.id))
+
+        running_qty = Decimal('0')
+        for tx in txs_sorted:
+            qty = Decimal(str(tx.quantity))
+            if tx.transaction_type == 'buy':
+                running_qty += qty
+            else:
+                running_qty -= qty
+                if running_qty < Decimal('0'):
+                    date_str = tx.transaction_date.strftime('%d/%m/%Y')
+                    return False, (
+                        f"La venta del {date_str} requiere más unidades "
+                        f"de las disponibles en esa fecha según FIFO. "
+                        f"Ajusta o elimina primero las transacciones posteriores."
+                    )
+        return True, None
+    
+    @staticmethod
+    def _simulate_fifo_with_new(all_transactions, new_tx_data, replace_id=None):
+        """
+        Simula el FIFO incluyendo una transacción nueva (o editada) sin guardarla.
+
+        Args:
+            all_transactions: transacciones actuales del instrumento.
+            new_tx_data: dict con keys: transaction_type, quantity, transaction_date, id=None
+            replace_id: si es edición, id de la transacción que se reemplaza.
+
+        Returns:
+            (True, None) o (False, "mensaje")
+        """
+        class FakeTx:
+            def __init__(self, d):
+                self.id = d.get('id')
+                self.transaction_type = d['transaction_type']
+                self.quantity = d['quantity']
+                self.transaction_date = _to_date(d['transaction_date'])
+
+        def _to_date(d):
+            from datetime import datetime
+            return d.date() if isinstance(d, datetime) else d
+
+        # Filtrar la que se reemplaza (edición)
+        txs = [t for t in all_transactions if t.id != replace_id]
+        txs.append(FakeTx(new_tx_data))
+        txs_sorted = sorted(txs, key=lambda t: (_to_date(t.transaction_date), 0 if t.transaction_type == 'buy' else 1, t.id or 0))
+
+        running_qty = Decimal('0')
+        for tx in txs_sorted:
+            qty = Decimal(str(tx.quantity))
+            if tx.transaction_type == 'buy':
+                running_qty += qty
+            else:
+                running_qty -= qty
+                if running_qty < Decimal('0'):
+                    date_str = tx.transaction_date.strftime('%d/%m/%Y')
+                    return False, (
+                        f"La venta del {date_str} requiere más unidades "
+                        f"de las disponibles en esa fecha según FIFO."
+                    )
+        return True, None
