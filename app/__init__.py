@@ -22,7 +22,7 @@ login_manager = LoginManager()
 login_manager.login_message = "Debe inicia sesión para acceder a la página."
 login_manager.login_message_category = "danger"
 
-def create_app(config_name='default'):
+def create_app(config_name='production'):
     """Application factory pattern."""
     app = Flask(__name__)
     

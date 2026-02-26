@@ -60,3 +60,4 @@ migrations/versions/*.pyc
 htmlcov/
 
 OLD/
+

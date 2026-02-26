@@ -6,7 +6,7 @@ CREATE DATABASE IF NOT EXISTS investment_tracker2
 CHARACTER SET utf8mb4 
 COLLATE utf8mb4_unicode_ci;
 
-USE investment_tracker;
+USE investment_tracker2;
 
 -- Instruments table
 CREATE TABLE IF NOT EXISTS instruments (
