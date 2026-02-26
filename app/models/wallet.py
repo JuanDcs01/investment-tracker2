@@ -10,7 +10,7 @@ class Wallet(db.Model):
     commissions = db.Column(db.Numeric(20, 2), nullable=False, default=0)
     dividend = db.Column(db.Numeric(20, 2), nullable=False, default=0)
 
-    user = db.relationship('User', backref=db.backref('wallets', lazy=True))
+    user = db.relationship('User', backref=db.backref('wallet', lazy=True))
 
     def __repr__(self):
         return (
