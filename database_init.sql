@@ -42,7 +42,7 @@ CREATE TABLE IF NOT EXISTS wallet (
     name VARCHAR(45) NOT NULL UNIQUE,
     quantity DECIMAL(20, 2) NOT NULL,
     commissions DECIMAL(20, 2) NOT NULL,
-    dividends DECIMAL(20, 2) NOT NULL,
+    dividends DECIMAL(20, 2) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Display success message
