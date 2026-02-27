@@ -11,6 +11,7 @@ USE investment_tracker2;
 -- Instruments table
 CREATE TABLE IF NOT EXISTS instruments (
     id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
     symbol VARCHAR(20) NOT NULL UNIQUE,
     instrument_type ENUM('stock', 'etf', 'crypto') NOT NULL,
     commission DECIMAL(20, 2) NOT NULL DEFAULT 0,
@@ -23,6 +24,7 @@ CREATE TABLE IF NOT EXISTS instruments (
 -- Transactions table
 CREATE TABLE IF NOT EXISTS transactions (
     id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
     instrument_id INT NOT NULL,
     transaction_type ENUM('buy', 'sell') NOT NULL,
     quantity DECIMAL(20, 12) NOT NULL,
@@ -39,8 +41,9 @@ CREATE TABLE IF NOT EXISTS transactions (
 -- Wallet  table
 CREATE TABLE IF NOT EXISTS wallet (
     id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
     name VARCHAR(45) NOT NULL UNIQUE,
-    quantity DECIMAL(20, 2) NOT NULL,
+    balance DECIMAL(20, 2) NOT NULL,
     commissions DECIMAL(20, 2) NOT NULL,
     dividends DECIMAL(20, 2) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
