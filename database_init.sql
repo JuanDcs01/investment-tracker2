@@ -2,11 +2,11 @@
 -- This script creates the database and necessary tables
 
 -- Create database
-CREATE DATABASE IF NOT EXISTS investment_tracker2 
+CREATE DATABASE IF NOT EXISTS JuanDcs$sgp_db
 CHARACTER SET utf8mb4 
 COLLATE utf8mb4_unicode_ci;
 
-USE investment_tracker2;
+USE JuanDcs$sgp_db;
 
 -- Instruments table
 CREATE TABLE IF NOT EXISTS instruments (
@@ -42,10 +42,9 @@ CREATE TABLE IF NOT EXISTS transactions (
 CREATE TABLE IF NOT EXISTS wallet (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
-    name VARCHAR(45) NOT NULL UNIQUE,
     balance DECIMAL(20, 2) NOT NULL,
     commissions DECIMAL(20, 2) NOT NULL,
-    dividends DECIMAL(20, 2) NOT NULL
+    dividend DECIMAL(20, 2) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Display success message
