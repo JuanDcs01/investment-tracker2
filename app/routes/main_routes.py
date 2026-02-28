@@ -340,7 +340,7 @@ def register_transaction(instrument_id):
         if transaction_type == 'buy':
             if wallet.balance - Decimal(str(transaction.total_paid)) < Decimal('0'):
                 flash(
-                    f'Poder de compra insuficiente. Solo posee ${wallet.balance:.2f}.',
+                    f'Poder de compra insuficiente. Solo posee ${wallet.balance:.2f} en la billetera.',
                     'danger'
                 )
                 return redirect(url_for('main.register_transaction', instrument_id=instrument_id))
