@@ -19,8 +19,8 @@ migrate = Migrate()
 csrf = CSRFProtect()
 login_manager = LoginManager()
 
-login_manager.login_message = "Debe inicia sesión para acceder a la página."
-login_manager.login_message_category = "danger"
+login_manager.login_message = None
+login_manager.login_message_category = None
 
 def create_app(config_name='production'):
     """Application factory pattern."""
