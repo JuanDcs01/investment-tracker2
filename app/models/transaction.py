@@ -5,21 +5,15 @@ from decimal import Decimal
 
 class Transaction(db.Model):
     """Model representing a buy or sell transaction for an instrument."""
-    
+
+    # Tabla
     __tablename__ = 'transactions'
     
+    # Atributos (columnas)
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False) # Añadido
-    instrument_id = db.Column(
-        db.Integer,
-        db.ForeignKey('instruments.id', ondelete='CASCADE'),
-        nullable=False,
-        index=True
-    )
-    transaction_type = db.Column(
-        db.Enum('buy', 'sell', name='transaction_type_enum'),
-        nullable=False
-    )
+    instrument_id = db.Column(db.Integer, db.ForeignKey('instruments.id', ondelete='CASCADE'), nullable=False, index=True)
+    transaction_type = db.Column(db.Enum('buy', 'sell', name='transaction_type_enum'), nullable=False)
     quantity = db.Column(db.Numeric(20, 12), nullable=False)
     price = db.Column(db.Numeric(20, 8), nullable=False)
     commission = db.Column(db.Numeric(20, 2), nullable=False, default=0)
@@ -27,14 +21,16 @@ class Transaction(db.Model):
     transaction_date = db.Column(db.Date, nullable=False, default=datetime.utcnow)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     
+    # Representacion del objeto
     def __repr__(self):
         return (
             f'<Transaction {self.transaction_type} '
             f'{self.quantity} @ {self.base_amount}>'
         )
     
+    # Diccionario del objeto
     def to_dict(self):
-        """Convert transaction to dictionary."""
+        """Convierte la transaccion a un diccionario."""
         return {
             'id': self.id,
             'instrument_id': self.instrument_id,
@@ -49,17 +45,18 @@ class Transaction(db.Model):
         }
 
         
-    
+    # Calculo de la columna del monto base
     def calculate_base_amount(self):
         """invertido sin comisiones"""
         base_amount = Decimal(self.quantity) * Decimal(self.price)
         self.base_amount = base_amount
 
         return self.base_amount
-    
+
+    # Total pagado como atributo
     @property
     def total_paid(self):
-        """Calculate total paid for the transaction."""
+        """Calculata el total pagado potr transaccion."""
         base_amount = Decimal(self.quantity) * Decimal(self.price)
         
         if self.transaction_type == 'buy':
