@@ -14,9 +14,10 @@ def login():
         
         if user and user.check_password(password):
             login_user(user)
-            return redirect(url_for('main.index')) # Cambia a tu ruta principal
+            return redirect(url_for('main.index'))
         else:
             flash('Usuario o contraseña incorrectos', 'danger')
+            return redirect(url_for('auth.login')) 
             
     return render_template('login.html')
 
