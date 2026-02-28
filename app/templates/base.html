@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{% block title %}Investment Tracker{% endblock %}</title>
+    <title>{% block title %}Trackeado{% endblock %}</title>
 
     <!-- Bootstrap CSS -->
     <link
@@ -51,13 +51,13 @@
         {% if request.endpoint == 'auth.login' %}
         <a class="navbar-brand" href="{{ url_for('auth.login') }}">
           <h2 class="text-white mb-0">
-            <i class="bi bi-graph-up-arrow"></i> Trackeo
+            <i class="bi bi-graph-up-arrow"></i> Trackeado
           </h2>
         </a>
         {% else %}
         <a class="navbar-brand" href="{{ url_for('main.index') }}">
           <h2 class="text-white mb-0">
-            <i class="bi bi-graph-up-arrow"></i> Trackeo
+            <i class="bi bi-graph-up-arrow"></i> Trackeado
           </h2>
         </a>
         {% endif %}
@@ -183,7 +183,7 @@
     <footer class="bg-light py-3" style="border-top: 1px solid #dee2e6">
       <div class="container text-center">
         <p class="text-muted mb-0">
-          &copy; 2026 Investment Trackeo | Datos obtenidos de Yahoo Finance |
+          &copy; 2026 Trackeado | Datos obtenidos de Yahoo Finance |
           Desarrollado por Juan David Concepcion S.
         </p>
         <div>
