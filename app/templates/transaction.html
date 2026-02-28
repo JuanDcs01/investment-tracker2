@@ -229,105 +229,131 @@ instrument.symbol }}{% endblock %} {% block content %}
 </div>
 {% endblock %} {% block extra_js %}
 <script>
-    // Set today's date as max and default
-  // Obtenemos la fecha local (año, mes y día por separado)
-      const ahora = new Date();
-      const anio = ahora.getFullYear();
-      const mes = String(ahora.getMonth() + 1).padStart(2, '0'); // Los meses van de 0 a 11
-      const dia = String(ahora.getDate()).padStart(2, '0');
+      // Set today's date as max and default
+    // Obtenemos la fecha local (año, mes y día por separado)
+        const ahora = new Date();
+        const anio = ahora.getFullYear();
+        const mes = String(ahora.getMonth() + 1).padStart(2, '0'); // Los meses van de 0 a 11
+        const dia = String(ahora.getDate()).padStart(2, '0');
 
-      // Formateamos como AAAA-MM-DD
-      const today = `${anio}-${mes}-${dia}`;
+        // Formateamos como AAAA-MM-DD
+        const today = `${anio}-${mes}-${dia}`;
 
-      const dateInput = document.getElementById('transaction_date');
-      dateInput.max = today;
-      dateInput.value = today;
+        const dateInput = document.getElementById('transaction_date');
+        dateInput.max = today;
+        dateInput.value = today;
 
-    // Calculate total automatically
-    function calculateTotal() {
-        const transactionType = document.getElementById('transaction_type').value;
-        const quantity = parseFloat(document.getElementById('quantity').value) || 0;
-        const price = parseFloat(document.getElementById('price').value) || 0;
-        const commission = parseFloat(document.getElementById('commission').value) || 0;
+      // Calculate total automatically
+      function calculateTotal() {
+          const transactionType = document.getElementById('transaction_type').value;
+          const quantity = parseFloat(document.getElementById('quantity').value) || 0;
+          const price = parseFloat(document.getElementById('price').value) || 0;
+          const commission = parseFloat(document.getElementById('commission').value) || 0;
 
-        let total = 0;
+          let total = 0;
 
-        if (transactionType === 'buy') {
-            total = (quantity * price) + commission;
-        } else if (transactionType === 'sell') {
-            total = (quantity * price) - commission;
-        }
-
-        const totalDisplay = document.getElementById('totalDisplay');
-        totalDisplay.value = total.toFixed(2); // Los inputs usan .value
-    }
-
-    // Add event listeners
-    document.getElementById('transaction_type').addEventListener('change', calculateTotal);
-    document.getElementById('quantity').addEventListener('input', calculateTotal);
-    document.getElementById('price').addEventListener('input', calculateTotal);
-    document.getElementById('commission').addEventListener('input', calculateTotal);
-
-    // Validate sell quantity
-    document.getElementById('transaction_type').addEventListener('change', function() {
-        const quantityInput = document.getElementById('quantity');
-        if (this.value === 'sell') {
-            quantityInput.max = {{ metrics.current_quantity }};
-        } else {
-            quantityInput.removeAttribute('max');
-        }
-    });
-
-    function loadTransaction(id, type, quantity, price, commission, date) {
-        document.getElementById('edit_transaction_id').value = id;
-        document.getElementById('transaction_type').value = type;
-        document.getElementById('quantity').value = quantity;
-        document.getElementById('price').value = price;
-        document.getElementById('commission').value = commission;
-        document.getElementById('transaction_date').value = date;
-        document.getElementById('submitBtn').innerHTML = '<i class="bi bi-pencil-square"></i> Actualizar Transacción';
-        document.getElementById('cancelEditBtn').classList.remove('d-none');
-        calculateTotal();
-        // Scroll al formulario
-        document.querySelector('.card').scrollIntoView({ behavior: 'smooth' });
-    }
-
-    function cancelEdit() {
-        document.getElementById('edit_transaction_id').value = '';
-        document.getElementById('transaction_type').value = '';
-        document.getElementById('quantity').value = '';
-        document.getElementById('price').value = '';
-        document.getElementById('commission').value = '0';
-        document.getElementById('transaction_date').value = today;
-        document.getElementById('submitBtn').innerHTML = '<i class="bi bi-check-circle"></i> Registrar Transacción';
-        document.getElementById('cancelEditBtn').classList.add('d-none');
-        calculateTotal();
-    }
-        // Delete Instrument Function
-      async function deleteTransaction(transactionId) {
-          if (!confirm(`¿Está seguro de eliminar la transacción? Esta acción no se puede deshacer.`)) {
-              return;
+          if (transactionType === 'buy') {
+              total = (quantity * price) + commission;
+          } else if (transactionType === 'sell') {
+              total = (quantity * price) - commission;
           }
 
+          const totalDisplay = document.getElementById('totalDisplay');
+          totalDisplay.value = total.toFixed(2); // Los inputs usan .value
+      }
+
+      // Add event listeners
+      document.getElementById('transaction_type').addEventListener('change', calculateTotal);
+      document.getElementById('quantity').addEventListener('input', calculateTotal);
+      document.getElementById('price').addEventListener('input', calculateTotal);
+      document.getElementById('commission').addEventListener('input', calculateTotal);
+
+      // Validate sell quantity
+      document.getElementById('transaction_type').addEventListener('change', function() {
+          const quantityInput = document.getElementById('quantity');
+          if (this.value === 'sell') {
+              quantityInput.max = {{ metrics.current_quantity }};
+          } else {
+              quantityInput.removeAttribute('max');
+          }
+      });
+
+      function loadTransaction(id, type, quantity, price, commission, date) {
+          document.getElementById('edit_transaction_id').value = id;
+          document.getElementById('transaction_type').value = type;
+          document.getElementById('quantity').value = quantity;
+          document.getElementById('price').value = price;
+          document.getElementById('commission').value = commission;
+          document.getElementById('transaction_date').value = date;
+          document.getElementById('submitBtn').innerHTML = '<i class="bi bi-pencil-square"></i> Actualizar Transacción';
+          document.getElementById('cancelEditBtn').classList.remove('d-none');
+          calculateTotal();
+          // Scroll al formulario
+          document.querySelector('.card').scrollIntoView({ behavior: 'smooth' });
+      }
+
+      function cancelEdit() {
+          document.getElementById('edit_transaction_id').value = '';
+          document.getElementById('transaction_type').value = '';
+          document.getElementById('quantity').value = '';
+          document.getElementById('price').value = '';
+          document.getElementById('commission').value = '0';
+          document.getElementById('transaction_date').value = today;
+          document.getElementById('submitBtn').innerHTML = '<i class="bi bi-check-circle"></i> Registrar Transacción';
+          document.getElementById('cancelEditBtn').classList.add('d-none');
+          calculateTotal();
+      }
+          // Delete Instrument Function
+  async function deleteTransaction(transactionId) {
+      // Reemplazamos el confirm() nativo por SweetAlert2
+      const result = await Swal.fire({
+          title: 'Confirmar eliminación',
+          text: '¿Está seguro de eliminar la transacción? Esta acción no se puede deshacer.',
+          showCancelButton: true,
+          confirmButtonColor: '#0d6efd',
+          cancelButtonColor: '#6c757d',
+          confirmButtonText: 'Eliminar',
+          cancelButtonText: 'Cancelar',
+          width: '400px'
+          // icon: eliminado para mantener el estilo minimalista solicitado
+      });
+
+      if (result.isConfirmed) {
           try {
               const response = await fetch(`/delete-transaction/${transactionId}`, {
                   method: 'POST',
                   headers: {
-                'X-CSRFToken': '{{ csrf_token() }}'
-            }
+                      'X-CSRFToken': '{{ csrf_token() }}'
+                  }
               });
 
               const data = await response.json();
 
               if (data.success) {
-                  alert(data.message);
+                  await Swal.fire({
+                      title: 'Eliminado',
+                      text: data.message,
+                      confirmButtonColor: '#0d6efd',
+                      width: '400px'
+                  });
                   location.reload();
               } else {
-                  alert(data.message);
+                  Swal.fire({
+                      title: 'Atención',
+                      text: data.message,
+                      confirmButtonColor: '#0d6efd',
+                      width: '400px'
+                  });
               }
           } catch (error) {
-              alert('Error al eliminar la transacción');
+              Swal.fire({
+                  title: 'Error',
+                  text: 'Error al eliminar la transacción',
+                  confirmButtonColor: '#0d6efd',
+                  width: '400px'
+              });
           }
       }
+  }
 </script>
 {% endblock %}

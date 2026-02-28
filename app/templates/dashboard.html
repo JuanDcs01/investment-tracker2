@@ -446,7 +446,7 @@ endblock %} {% block content %}
 
 {% endblock %} {% block extra_js %}
 <script>
-      // Add Instrument Form Handler
+            // Add Instrument Form Handler
       document.getElementById('addInstrumentForm').addEventListener('submit', async function(e) {
           e.preventDefault();
 
@@ -459,27 +459,46 @@ endblock %} {% block content %}
                   method: 'POST',
                   body: formData,
                   headers: {
-                'X-CSRFToken': '{{ csrf_token() }}'  // <-- Agrega esto
-            }
+                      'X-CSRFToken': '{{ csrf_token() }}'
+                  }
               });
 
               const data = await response.json();
 
               if (data.success) {
-                  alert(data.message);
-                  location.reload();
+                  // REEMPLAZO: Alerta de éxito
+                  Swal.fire({
+                      title: 'Logrado',
+                      text: data.message,
+                       width: '400px',
+                      confirmButtonColor: '#0d6efd'
+                  }).then(() => {
+                      location.reload();
+                  });
               } else {
-                  alert(data.message);
+                  // REEMPLAZO: Alerta de error (ej. "instrumento ya existe")
+                  Swal.fire({
+                      title: 'Atención',
+                      text: data.message,
+                      width: '400px',
+                      confirmButtonColor: '#0d6efd'
+                  });
               }
           } catch (error) {
-              alert('Error al agregar el instrumento');
+              // REEMPLAZO: Error de conexión o servidor
+              Swal.fire({
+                  title: 'Error',
+                  text: 'Hubo un problema al procesar la solicitud.',
+                  width: '400px',
+                  confirmButtonColor: '#0d6efd'
+              });
           } finally {
               submitBtn.disabled = false;
           }
       });
 
-      // Manejador para Editar Cartera (Wallet)
-      document.getElementById('editWalletForm').addEventListener('submit', async function(e) {
+            // Manejador para Editar Cartera (Wallet)
+            document.getElementById('editWalletForm').addEventListener('submit', async function(e) {
       e.preventDefault();
 
       const formData = new FormData(this);
@@ -487,162 +506,214 @@ endblock %} {% block content %}
       submitBtn.disabled = true;
 
       try {
-          // Asegúrate de que la ruta coincida con bp.route('/update-wallet')
           const response = await fetch('{{ url_for("main.update_wallet") }}', {
               method: 'POST',
               body: formData,
               headers: {
-                'X-CSRFToken': '{{ csrf_token() }}'
-            }
+                  'X-CSRFToken': '{{ csrf_token() }}'
+              }
           });
 
           const data = await response.json();
 
           if (data.success) {
-              alert(data.message);
-              location.reload(); // Recarga para ver los nuevos valores
+              // Éxito: Sin icono, azul Bootstrap, 400px
+              await Swal.fire({
+                  title: 'Actualizado',
+                  text: data.message,
+                  confirmButtonColor: '#0d6efd',
+                  width: '400px'
+              });
+              location.reload();
           } else {
-              alert("Error: " + data.message);
+              // Error de validación
+              Swal.fire({
+                  title: 'Atención',
+                  text: data.message,
+                  confirmButtonColor: '#0d6efd',
+                  width: '400px'
+              });
           }
       } catch (error) {
           console.error(error);
-          alert('Error al actualizar la billetera');
+          // Error de servidor/red
+          Swal.fire({
+              title: 'Error',
+              text: 'Error al actualizar la billetera',
+              confirmButtonColor: '#0d6efd',
+              width: '400px'
+          });
       } finally {
           submitBtn.disabled = false;
       }
   });
 
-      // Delete Instrument Function
-      async function deleteInstrument(instrumentId, symbol) {
-          if (!confirm(`¿Está seguro de eliminar ${symbol}? Esta acción no se puede deshacer.`)) {
-              return;
-          }
-
-          try {
-              const response = await fetch(`/delete-instrument/${instrumentId}`, {
-                  method: 'POST',
-                  headers: {
-                'X-CSRFToken': '{{ csrf_token() }}'
-            }
-              });
-
-              const data = await response.json();
-
-              if (data.success) {
-                  alert(data.message);
-                  location.reload();
-              } else {
-                  alert(data.message);
-              }
-          } catch (error) {
-              alert('Error al eliminar el instrumento');
-          }
-      }
-
-      // Refresh prices function
-      async function refreshPrices() {
-          try {
-              const response = await fetch('/api/refresh-prices', {
-                  method: 'POST',
-                  headers: {
-                'X-CSRFToken': '{{ csrf_token() }}'
-            }
-              });
-
-              const data = await response.json();
-
-              if (data.success) {
-                  location.reload();
-              } else {
-                  alert('Error al actualizar precios');
-              }
-          } catch (error) {
-              alert('Error al actualizar precios');
-          }
-      }
-
-      // Charts
-      {% if instruments %}
-      const distribution = {{ distribution|tojson | safe}};
-
-      // Helper function to create doughnut chart
-    function createDoughnutChart(canvasId, data, title) {
-        const ctx = document.getElementById(canvasId).getContext('2d');
-        const total = data.reduce((sum, item) => sum + Number(item.value || 0), 0);
-
-        new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: data.map(d => d.label),
-                datasets: [{
-                    data: data.map(d => d.value),
-                    backgroundColor: [
-                        '#A2D2FF', '#B9FBC0', '#FEFAE0', '#FFCFD2',
-                        '#E1DBFF', '#FDE4CF', '#CFFAF1', '#F1F1F1'
-                    ],
-                    borderWidth: 1,
-                    borderColor: '#ffffff'
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: true,
-                plugins: {
-                    legend: {
-                        position: 'bottom'
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                const label = context.label || '';
-                                const value = context.parsed;
-                                const percentage = ((value / total) * 100).toFixed(2);
-                                console.log('Tooltip data:', { value, total });
-                                return `${label}: $${value.toLocaleString()} (${percentage}%)`;
-                            }
-                        }
-                    },
-                datalabels: {
-                    color: '#000',
-                    font: {
-                        weight: 'bold',
-                        size: 11
-                    },
-                    formatter: function(value, context) {
-                        const percentage = ((value / total) * 100).toFixed(1);
-                        if (percentage > 5) {
-                            return percentage + '%\n$' + value.toLocaleString('en-US', {maximumFractionDigits: 0});
-                        }
-                        return '';
-                    },
-                    anchor: 'center',
-                    align: 'center'
-                }
-                }
-            },
-            plugins: [ChartDataLabels]
+            // Delete Instrument Function
+    async function deleteInstrument(instrumentId, symbol) {
+        // Reemplazamos el confirm() nativo por SweetAlert2
+        const result = await Swal.fire({
+            title: 'Confirmar eliminación',
+            text: `¿Está seguro de eliminar ${symbol}? Esta acción no se puede deshacer.`,
+            showCancelButton: true,
+            confirmButtonColor: '#0d6efd',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Eliminar',
+            cancelButtonText: 'Cancelar',
+            width: '400px'
+            // icon: 'warning' -> Eliminado según tu petición
         });
+
+        if (result.isConfirmed) {
+            try {
+                const response = await fetch(`/delete-instrument/${instrumentId}`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token() }}'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    await Swal.fire({
+                        title: 'Eliminado',
+                        text: data.message,
+                        confirmButtonColor: '#0d6efd',
+                        width: '400px'
+                    });
+                    location.reload();
+                } else {
+                    Swal.fire({
+                        title: 'Error',
+                        text: data.message,
+                        confirmButtonColor: '#0d6efd',
+                        width: '400px'
+                    });
+                }
+            } catch (error) {
+                Swal.fire({
+                    title: 'Error',
+                    text: 'Error al eliminar el instrumento',
+                    confirmButtonColor: '#0d6efd',
+                    width: '400px'
+                });
+            }
+        }
     }
 
-      if (distribution.by_instrument) {
-          distribution.by_instrument.push({
-              label: 'Billetera (Cash)',
-              value: {{ wallet.balance|float }} // Convertimos el Decimal a float para JS
-          });
-      }
+    async function refreshPrices() {
+        try {
+            const response = await fetch('/api/refresh-prices', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token() }}'
+                }
+            });
 
-      // Create charts
-      if (distribution.by_type && distribution.by_type.length > 0) {
-          createDoughnutChart('typeChart', distribution.by_type, 'Por Tipo');
-      }
+            const data = await response.json();
 
-      if (distribution.by_risk && distribution.by_risk.length > 0) {
-          createDoughnutChart('riskChart', distribution.by_risk, 'Por Riesgo');
-      }
+            if (data.success) {
+                location.reload();
+            } else {
+                Swal.fire({
+                    title: 'Error',
+                    text: 'Error al actualizar precios',
+                    confirmButtonColor: '#0d6efd',
+                    width: '400px',
+                });
+            }
+        } catch (error) {
+            Swal.fire({
+                title: 'Error',
+                text: 'Error al actualizar precios',
+                confirmButtonColor: '#0d6efd',
+                width: '400px'
+            });
+        }
+    }
 
-      if (distribution.by_instrument && distribution.by_instrument.length > 0) {
-          createDoughnutChart('instrumentChart', distribution.by_instrument, 'Por Instrumento');
-      }
-      {% endif %}
+            // Charts
+            {% if instruments %}
+            const distribution = {{ distribution|tojson | safe}};
+
+            // Helper function to create doughnut chart
+          function createDoughnutChart(canvasId, data, title) {
+              const ctx = document.getElementById(canvasId).getContext('2d');
+              const total = data.reduce((sum, item) => sum + Number(item.value || 0), 0);
+
+              new Chart(ctx, {
+                  type: 'doughnut',
+                  data: {
+                      labels: data.map(d => d.label),
+                      datasets: [{
+                          data: data.map(d => d.value),
+                          backgroundColor: [
+                              '#A2D2FF', '#B9FBC0', '#FEFAE0', '#FFCFD2',
+                              '#E1DBFF', '#FDE4CF', '#CFFAF1', '#F1F1F1'
+                          ],
+                          borderWidth: 1,
+                          borderColor: '#ffffff'
+                      }]
+                  },
+                  options: {
+                      responsive: true,
+                      maintainAspectRatio: true,
+                      plugins: {
+                          legend: {
+                              position: 'bottom'
+                          },
+                          tooltip: {
+                              callbacks: {
+                                  label: function(context) {
+                                      const label = context.label || '';
+                                      const value = context.parsed;
+                                      const percentage = ((value / total) * 100).toFixed(2);
+                                      console.log('Tooltip data:', { value, total });
+                                      return `${label}: $${value.toLocaleString()} (${percentage}%)`;
+                                  }
+                              }
+                          },
+                      datalabels: {
+                          color: '#000',
+                          font: {
+                              weight: 'bold',
+                              size: 11
+                          },
+                          formatter: function(value, context) {
+                              const percentage = ((value / total) * 100).toFixed(1);
+                              if (percentage > 5) {
+                                  return percentage + '%\n$' + value.toLocaleString('en-US', {maximumFractionDigits: 0});
+                              }
+                              return '';
+                          },
+                          anchor: 'center',
+                          align: 'center'
+                      }
+                      }
+                  },
+                  plugins: [ChartDataLabels]
+              });
+          }
+
+            if (distribution.by_instrument) {
+                distribution.by_instrument.push({
+                    label: 'Billetera (Cash)',
+                    value: {{ wallet.balance|float }} // Convertimos el Decimal a float para JS
+                });
+            }
+
+            // Create charts
+            if (distribution.by_type && distribution.by_type.length > 0) {
+                createDoughnutChart('typeChart', distribution.by_type, 'Por Tipo');
+            }
+
+            if (distribution.by_risk && distribution.by_risk.length > 0) {
+                createDoughnutChart('riskChart', distribution.by_risk, 'Por Riesgo');
+            }
+
+            if (distribution.by_instrument && distribution.by_instrument.length > 0) {
+                createDoughnutChart('instrumentChart', distribution.by_instrument, 'Por Instrumento');
+            }
+            {% endif %}
 </script>
 {% endblock %}
