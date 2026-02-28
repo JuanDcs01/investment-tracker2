@@ -141,11 +141,11 @@ endblock %} {% block content %}
           <thead class="table-light">
             <tr>
               <th>Símbolo</th>
-              <th>Tipo</th>
-              <th class="text-end">Cantidad</th>
+              <th class="solo-desktop">Tipo</th>
+              <th class="text-end solo-desktop">Cantidad</th>
               <th class="text-end">Precio Actual</th>
               <th class="text-end">Ultima apertura</th>
-              <th class="text-end">Inversión Actual</th>
+              <th class="text-end solo-desktop">Inversión Actual</th>
               <th class="text-end">Valor Mercado</th>
               <th class="text-end">G. No Realizada</th>
               <th class="text-end">G. Realizada</th>
@@ -157,14 +157,16 @@ endblock %} {% block content %}
             {% if instruments %} {% for inst in instruments %}
             <tr>
               <td><strong>{{ inst.symbol }}</strong></td>
-              <td>
+              <td class="solo-desktop">
                 <span
                   class="badge {% if inst.type == 'stock' %}bg-primary {% elif inst.type == 'etf' %}bg-success {% else %}bg-warning{% endif %}"
                 >
                   {{ inst.type|upper }}
                 </span>
               </td>
-              <td class="text-end">{{ inst.current_quantity|number(4) }}</td>
+              <td class="text-end solo-desktop">
+                {{ inst.current_quantity|number(4) }}
+              </td>
               <td class="text-end">{{ inst.current_price|currency }}</td>
 
               <!-- Ultima apertura -->
@@ -177,7 +179,9 @@ endblock %} {% block content %}
               </td>
 
               <!-- Inversión Actual -->
-              <td class="text-end">{{ inst.current_investment|currency }}</td>
+              <td class="text-end solo-desktop">
+                {{ inst.current_investment|currency }}
+              </td>
 
               <!-- Valor Mercado -->
               <td class="text-end">{{ inst.current_value|currency }}</td>

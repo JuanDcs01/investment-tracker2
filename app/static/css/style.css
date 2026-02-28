@@ -179,3 +179,10 @@ footer {
 .fade-in {
   animation: fadeIn 0.3s ease-in;
 }
+
+/* solo desktop*/
+@media (max-width: 768px) {
+  .solo-desktop {
+    display: none !important;
+  }
+}
